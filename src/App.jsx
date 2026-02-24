@@ -131,10 +131,9 @@ export default function CafeSystem() {
       const newOrder = { id: orderId, table: orderType==='takeout'?`外帶-${phoneSuffix}`:`桌號 ${tableNumber}`, items: cart, total: cart.reduce((s,i)=>s+(i.price*i.quantity),0), status: 'pending', date: new Date().toLocaleDateString('zh-TW'), time: new Date().toLocaleTimeString('zh-TW'), timestamp: ts };
       await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', orderId), newOrder);
       setLastOrder(newOrder); setOrderStatus('success'); setIsCartOpen(false);
-    } catch (e) { alert('系統忙碌中，請重試'); }
+    } catch (e) { alert('系統連線繁忙，請重試'); }
   };
 
-  // --- 啟動畫面還原：ASA 南巷微光品味中......... ---
   if (!isDataLoaded) return <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center font-black text-xl text-amber-900 tracking-widest italic animate-pulse">ASA 南巷微光品味中.........</div>;
 
   if (systemRole === 'customer') {
@@ -156,7 +155,7 @@ export default function CafeSystem() {
     }
     return (
       <div className="min-h-screen bg-[#FDFBF7] font-sans pb-32 flex flex-col text-amber-900 overflow-x-hidden">
-        <header className="bg-white/80 backdrop-blur-md sticky top-0 z-[100] border-b border-amber-100 px-6 py-4">
+        <header className="bg-white/80 backdrop-blur-md sticky top-0 z-[100] border-b border-amber-100 px-6 py-4 shadow-sm">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
             <div className="flex items-center gap-3">
               <img src="https://i.postimg.cc/1tTJBrLd/Gemini-Generated-Image-7uf38w7uf38w7uf3.png" className="w-12 h-12 rounded-full object-cover shadow-xl border-2 border-amber-900/10" alt="ASA Logo" />
@@ -219,7 +218,7 @@ export default function CafeSystem() {
         </div>
 
         {isCartOpen && (
-          <div className="fixed inset-0 z-200 flex flex-col justify-end lg:hidden">
+          <div className="fixed inset-0 z-[200] flex flex-col justify-end lg:hidden">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsCartOpen(false)}></div>
             <div className="bg-white w-full rounded-t-[2.5rem] relative p-8 shadow-2xl animate-slide-up max-h-[80vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6"><h2 className="text-lg font-black uppercase text-amber-900 tracking-widest text-center">ORDER DETAILS</h2><X onClick={()=>setIsCartOpen(false)} size={24} className="text-amber-200" /></div>
@@ -239,7 +238,6 @@ export default function CafeSystem() {
           </div>
         )}
 
-        {/* 電腦版側邊欄：回歸 5.0 比例 */}
         <aside className="hidden lg:flex w-[380px] bg-white border-l border-amber-100 fixed right-0 top-0 bottom-0 flex-col shadow-2xl z-[50]">
           <div className="p-8 border-b border-amber-50 bg-[#FDFBF7] font-serif text-2xl font-black text-amber-900 text-center uppercase tracking-widest">ASA CART</div>
           <div className="flex-1 overflow-y-auto p-8 space-y-8">
@@ -258,7 +256,7 @@ export default function CafeSystem() {
           </div>
           <div className="p-8 bg-[#FDFBF7] border-t border-amber-100 font-black text-amber-900">
             <div className="flex justify-between items-end mb-6 text-3xl font-serif font-black"><span className="text-[11px] font-black text-amber-400 uppercase tracking-widest mb-1">TOTAL</span><span>$ {cart.reduce((s,i)=>s+(i.price*i.quantity),0)}</span></div>
-            <button onClick={handleSubmitOrder} className="w-full py-5 bg-amber-800 text-white rounded-2xl font-black text-sm shadow-xl active:scale-95 transition-all">正式送出訂單</button>
+            <button disabled={cart.length===0} onClick={handleSubmitOrder} className="w-full py-5 bg-amber-800 text-white rounded-2xl font-black text-base shadow-xl active:scale-95 transition-all">正式送出訂單</button>
           </div>
         </aside>
 
@@ -279,11 +277,11 @@ export default function CafeSystem() {
     );
   }
 
-  // --- 後台與後廚系統：電腦版比例縮小優化 ---
+  // --- 後台與主控系統：根據需求精密調整比例與字體 ---
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
        <header className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/95 sticky top-0 z-50">
-          <h1 className="font-black text-lg flex items-center gap-3 text-amber-500 uppercase tracking-widest"><ChefHat size={24} /> ASA 主控室</h1>
+          <h1 className="font-black text-lg md:text-xl flex items-center gap-3 text-amber-500 uppercase tracking-widest"><ChefHat size={28} /> ASA 主控室</h1>
           <button onClick={() => setSystemRole('customer')} className="text-[10px] bg-slate-800 px-6 py-2 rounded-xl font-black text-slate-400 border border-slate-700 hover:text-white transition-all uppercase tracking-widest">Logout</button>
        </header>
        <main className="p-6 flex-1 max-w-[1400px] mx-auto w-full overflow-y-auto">
@@ -291,11 +289,11 @@ export default function CafeSystem() {
             <div className="space-y-8 animate-fade-in">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-6 bg-slate-800/80 rounded-3xl border border-amber-500/20 shadow-2xl backdrop-blur-md">
-                   <h2 className="text-amber-500 font-black mb-6 flex items-center gap-3 text-lg uppercase tracking-widest"><TrendingUp size={24} /> 今日排行 (HOT 5)</h2>
-                   <div className="space-y-3">{hotItems.map((h, i) => (<div key={i} className="bg-slate-900 p-4 rounded-xl border-l-4 border-amber-50 flex justify-between items-center shadow-lg"><span className="font-black text-sm">#{i+1} {h.name}</span><span className="text-amber-400 font-black text-xl">{h.count} 份</span></div>))}</div>
+                   <h2 className="text-amber-500 font-black mb-6 flex items-center gap-3 text-xl uppercase tracking-widest"><TrendingUp size={24} /> 今日排行 (HOT 5)</h2>
+                   <div className="space-y-3">{hotItems.map((h, i) => (<div key={i} className="bg-slate-900 p-4 rounded-xl border-l-4 border-amber-500 flex justify-between items-center shadow-lg"><span className="font-black text-sm">#{i+1} {h.name}</span><span className="text-amber-400 font-black text-xl">{h.count} 份</span></div>))}</div>
                 </div>
                 <div className="p-6 bg-slate-800/80 rounded-3xl border border-amber-500/20 shadow-2xl backdrop-blur-md">
-                   <h2 className="text-amber-500 font-black mb-6 flex items-center gap-3 text-lg uppercase tracking-widest"><PackagePlus size={24} /> 庫存管理</h2>
+                   <h2 className="text-amber-500 font-black mb-6 flex items-center gap-3 text-xl uppercase tracking-widest"><PackagePlus size={24} /> 庫存管理</h2>
                    <div className="space-y-3">{menuData.find(c=>c.id==='c3')?.items.map(i => (<div key={i.id} className="flex justify-between items-center bg-slate-700 p-4 rounded-2xl border border-slate-600"><span className="font-black text-sm">{i.name}</span><input type="number" value={i.stock} onChange={async(e)=>{ const u = menuData.find(c=>c.id==='c3').items.map(it=>it.id===i.id?{...it,stock:parseInt(e.target.value)}:it); await updateDoc(doc(db,'artifacts',appId,'public','data','menu','c3'),{items:u}); }} className="w-20 bg-slate-900 text-amber-400 rounded-xl p-2 text-center font-black text-lg border-none" /></div>))}</div>
                 </div>
               </div>
@@ -317,32 +315,61 @@ export default function CafeSystem() {
             </div>
           ) : (
             <div className="space-y-10 animate-fade-in">
+              {/* --- 修改：主控室分類切換文字加大 2pt --- */}
               <div className="flex gap-4 bg-slate-800 p-2.5 rounded-2xl w-fit border border-slate-700 shadow-xl">
-                <button onClick={()=>setAdminTab('reports')} className={`px-10 py-3 rounded-xl text-[12px] font-black transition-all ${adminTab==='reports'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>銷售報表分析</button>
-                <button onClick={()=>setAdminTab('products')} className={`px-10 py-3 rounded-xl text-[12px] font-black transition-all ${adminTab==='products'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>商品管理</button>
+                <button onClick={()=>setAdminTab('reports')} className={`px-10 py-3 rounded-xl text-base font-black transition-all ${adminTab==='reports'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>銷售報表分析 (REPORTS)</button>
+                <button onClick={()=>setAdminTab('products')} className={`px-10 py-3 rounded-xl text-base font-black transition-all ${adminTab==='products'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>商品管理 (STOCK)</button>
               </div>
+
               {adminTab === 'reports' ? (
                 <div className="space-y-10">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="bg-gradient-to-br from-blue-600 to-indigo-900 p-12 rounded-[3rem] shadow-2xl flex flex-col justify-between h-64 border-4 border-blue-500/20"><span className="font-black text-blue-100 uppercase tracking-widest text-[11px]">當日雲端累計總營收</span><h3 className="text-7xl font-black text-white tracking-tighter">$ {orders.reduce((s,o)=>s+o.total, 0).toLocaleString()}</h3></div>
-                    <div className="bg-slate-800 p-12 rounded-[3rem] border-4 border-slate-700 flex flex-col justify-between h-64 shadow-xl"><span className="font-black text-slate-500 uppercase tracking-widest text-[11px]">總結帳單數統計</span><h3 className="text-7xl font-black text-amber-500 tracking-tighter">{orders.length} <span className="text-2xl text-slate-600 uppercase">單</span></h3></div>
+                    {/* --- 修改：外框縮小 (p-12 -> p-8, h-64 -> h-52), 標籤字體加大, 數字適當縮小 (text-7xl -> text-5xl) --- */}
+                    <div className="bg-gradient-to-br from-blue-600 to-indigo-900 p-8 rounded-[3rem] shadow-2xl flex flex-col justify-between h-52 border-4 border-blue-500/20">
+                       <span className="font-black text-blue-100 uppercase tracking-widest text-sm">當日雲端累計總額</span>
+                       <h3 className="text-5xl font-black text-white tracking-tighter">$ {orders.reduce((s,o)=>s+o.total, 0).toLocaleString()}</h3>
+                    </div>
+                    <div className="bg-slate-800 p-8 rounded-[3rem] border-4 border-slate-700 flex flex-col justify-between h-52 shadow-xl">
+                       <span className="font-black text-slate-500 uppercase tracking-widest text-sm">總結帳單數統計</span>
+                       <h3 className="text-5xl font-black text-amber-500 tracking-tighter">{orders.length} <span className="text-lg text-slate-600 uppercase">單</span></h3>
+                    </div>
                   </div>
+
                   <div className="bg-slate-800 p-10 rounded-[3rem] border border-slate-700 shadow-2xl">
                      <h2 className="text-2xl font-black mb-10 text-blue-400 flex items-center gap-3 uppercase tracking-widest"><BarChart3 size={32} /> 銷售細目報表</h2>
-                     <table className="w-full text-left font-black"><thead><tr className="text-slate-500 border-b border-slate-700 text-[11px] uppercase tracking-widest"><th className="pb-6 px-4">商品名稱 (ITEM)</th><th className="pb-6 px-4 text-center">總銷量 (QTY)</th><th className="pb-6 px-4 text-right">合計金額 (TOTAL)</th></tr></thead><tbody>{salesDetail.map((s,i)=>(<tr key={i} className="border-b border-slate-700/30 text-lg hover:bg-slate-700/40 transition-colors"><td className="py-6 px-4">{s.name}</td><td className="py-6 px-4 text-center text-amber-500">{s.qty} 份</td><td className="py-6 px-4 text-right text-blue-400">$ {s.subtotal.toLocaleString()}</td></tr>))}</tbody></table>
+                     <table className="w-full text-left font-black">
+                        <thead>
+                           {/* --- 修改：表頭文字加大 2pt (text-[11px] -> text-sm) --- */}
+                           <tr className="text-slate-500 border-b border-slate-700 text-sm uppercase tracking-widest">
+                              <th className="pb-6 px-4">商品名稱 (ITEM)</th>
+                              <th className="pb-6 px-4 text-center">總銷量 (QTY)</th>
+                              <th className="pb-6 px-4 text-right">合計金額 (TOTAL)</th>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           {salesDetail.map((s,i)=>(
+                             <tr key={i} className="border-b border-slate-700/30 text-lg hover:bg-slate-700/40 transition-colors">
+                               <td className="py-6 px-4">{s.name}</td>
+                               <td className="py-6 px-4 text-center text-amber-500">{s.qty} 份</td>
+                               <td className="py-6 px-4 text-right text-blue-400">$ {s.subtotal.toLocaleString()}</td>
+                             </tr>
+                           ))}
+                        </tbody>
+                     </table>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-8">
+                  {/* 商品管理模塊 */}
                   <div className="bg-slate-800 p-12 rounded-[4rem] border border-slate-700 shadow-2xl">
-                    <h2 className="text-2xl font-black mb-10 text-blue-400 uppercase tracking-widest"><PackagePlus size={36} /> 新增 ASA 商品上架</h2>
+                    <h2 className="text-2xl font-black mb-10 flex items-center gap-3 text-blue-400 uppercase tracking-widest"><PackagePlus size={36} /> 新增 ASA 商品上架</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                       <select value={newItem.categoryId} onChange={e=>setNewItem({...newItem, categoryId: e.target.value})} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner shadow-black/50">{menuData.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
                       <input type="text" placeholder="品名" value={newItem.name} onChange={e=>{const n=e.target.value; setNewItem({...newItem, name:n, poetry:generatePoetry(n)});}} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner shadow-black/50" />
                       <input type="number" placeholder="單價" value={newItem.price} onChange={e=>setNewItem({...newItem, price:e.target.value})} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner shadow-black/50" />
                       <input type="text" placeholder="自動詩詞描述" value={newItem.poetry} onChange={e=>setNewItem({...newItem, poetry:e.target.value})} className="col-span-full bg-slate-900 p-6 rounded-3xl border border-blue-900/50 italic text-blue-200 text-lg shadow-inner font-serif" />
                       <input type="text" placeholder="照片 URL" value={newItem.image} onChange={e=>setNewItem({...newItem, image:e.target.value})} className="col-span-full bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner shadow-black/50" />
-                      <button onClick={async()=>{ const cat = menuData.find(c=>c.id===newItem.categoryId); const it = { ...newItem, id: `m_${Date.now()}`, price: parseInt(newItem.price), stock: parseInt(newItem.stock) }; await updateDoc(doc(db,'artifacts',appId,'public','data','menu',newItem.categoryId), { items: [...cat.items, it] }); alert('上架成功！'); setNewItem({...newItem, name:'', price:'', poetry:'', image:''}); }} className="col-span-full bg-blue-600 py-7 rounded-[2.5rem] font-black shadow-2xl active:scale-95 transition-all text-2xl mt-6 uppercase tracking-widest">發佈新品 (PUBLISH)</button>
+                      <button onClick={async()=>{ const cat = menuData.find(c=>c.id===newItem.categoryId); const it = { ...newItem, id: `m_${Date.now()}`, price: parseInt(newItem.price), stock: parseInt(newItem.stock) }; await updateDoc(doc(db,'artifacts',appId,'public','data','menu',newItem.categoryId), { items: [...cat.items, it] }); alert('上架成功！'); setNewItem({...newItem, name:'', price:'', poetry:'', image:''}); }} className="col-span-full bg-blue-600 py-8 rounded-[3rem] font-black shadow-2xl active:scale-95 transition-all text-2xl mt-6 uppercase tracking-widest">發佈新品 (PUBLISH)</button>
                     </div>
                   </div>
                   <div className="bg-slate-800 p-10 rounded-[3rem] border border-slate-700 shadow-xl">
