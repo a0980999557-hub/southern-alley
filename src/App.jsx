@@ -246,4 +246,162 @@ export default function CafeSystem() {
               <div className="bg-amber-50 p-10 rounded-[3rem] space-y-8 mb-12 border border-amber-100 shadow-inner">
                 <div className="flex gap-4 bg-white p-2 rounded-[1.8rem] shadow-md">
                   <button onClick={()=>setOrderType('dineIn')} className={`flex-1 py-5 text-sm font-black rounded-2xl transition-all ${orderType==='dineIn'?'bg-amber-800 text-white shadow-xl':'text-amber-300'}`}>內用</button>
-                  <button onClick={()=>setOrderType('takeout')} className={`flex-1 py-5 text-sm font-black rounded-2xl transition-all ${orderType==='takeout
+                  <button onClick={()=>setOrderType('takeout')} className={`flex-1 py-5 text-sm font-black rounded-2xl transition-all ${orderType==='takeout'?'bg-amber-800 text-white shadow-xl':'text-amber-300'}`}>外帶</button>
+                </div>
+                <input type="text" placeholder={orderType==='dineIn'?'請輸入您的桌號':'手機末三碼'} value={orderType==='dineIn'?tableNumber:phoneSuffix} onChange={e=>orderType==='dineIn'?setTableNumber(e.target.value):setPhoneSuffix(e.target.value)} className="w-full bg-white rounded-[1.8rem] p-6 text-2xl font-black shadow-inner outline-none text-center placeholder-amber-100" />
+              </div>
+              <div className="space-y-10 mb-14">
+                {cart.map(i => (
+                  <div key={i.id} className="flex justify-between items-center p-4 border-b border-amber-50">
+                    <span className="text-2xl font-black text-amber-950">{i.name}</span>
+                    <div className="flex items-center gap-8 bg-amber-50 px-6 py-3 rounded-full border border-amber-100 shadow-sm">
+                       <Minus size={28} className="text-amber-800 cursor-pointer" onClick={()=>setCart(prev=>prev.map(x=>x.id===i.id?{...x,quantity:Math.max(0,x.quantity-1)}:x).filter(x=>x.quantity>0))} />
+                       <span className="text-3xl font-black min-w-[32px] text-center">{i.quantity}</span>
+                       <Plus size={28} className="text-amber-800 cursor-pointer" onClick={()=>addToCart(i)} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button onClick={handleSubmitOrder} className="w-full py-8 bg-amber-800 text-white rounded-[3rem] font-black text-3xl active:scale-95 shadow-2xl">正式送出訂單</button>
+            </div>
+          </div>
+        )}
+
+        <aside className="hidden lg:flex w-[450px] bg-white border-l border-amber-100 fixed right-0 top-0 bottom-0 flex-col shadow-2xl z-[50]">
+          <div className="p-14 border-b border-amber-50 bg-[#FDFBF7] font-serif text-5xl font-black tracking-widest uppercase text-amber-900 text-center">ASA CART</div>
+          <div className="flex-1 overflow-y-auto p-12 space-y-12">
+            <div className="bg-amber-50 p-10 rounded-[3.5rem] space-y-8 shadow-inner border border-amber-100">
+               <div className="flex gap-4 bg-white p-2 rounded-[2rem] shadow-md">
+                  <button onClick={()=>setOrderType('dineIn')} className={`flex-1 py-5 text-xs font-black rounded-2xl transition-all ${orderType==='dineIn'?'bg-amber-800 text-white shadow-xl':'text-amber-300'}`}>內用 (Dine-in)</button>
+                  <button onClick={()=>setOrderType('takeout')} className={`flex-1 py-5 text-xs font-black rounded-2xl transition-all ${orderType==='takeout'?'bg-amber-800 text-white shadow-xl':'text-amber-300'}`}>外帶 (Take-out)</button>
+               </div>
+               <input type="text" placeholder={orderType==='dineIn'?'請輸入桌號':'手機末三碼'} value={orderType==='dineIn'?tableNumber:phoneSuffix} onChange={e=>orderType==='dineIn'?setTableNumber(e.target.value):setPhoneSuffix(e.target.value)} className="w-full bg-white rounded-2xl p-6 text-center text-xl font-black shadow-inner outline-none" />
+            </div>
+            <div className="space-y-10">
+              {cart.map((i,idx) => (
+                <div key={idx} className="flex justify-between items-center bg-white p-8 rounded-[2.5rem] border border-amber-100 shadow-sm transition-all hover:shadow-xl">
+                  <div className="flex-1">
+                    <div className="font-black text-2xl text-amber-950">{i.name}</div>
+                    <div className="text-sm text-amber-500 font-black mt-1">$ {i.price}</div>
+                  </div>
+                  <div className="flex items-center gap-6 bg-amber-50 px-6 py-3 rounded-full border border-amber-100">
+                     <Minus size={22} className="cursor-pointer text-amber-800" onClick={()=>setCart(prev=>prev.map(x=>x.id===i.id?{...x,quantity:Math.max(0,x.quantity-1)}:x).filter(x=>x.quantity>0))} />
+                     <span className="font-black text-2xl min-w-[30px] text-center">{i.quantity}</span>
+                     <Plus size={22} className="cursor-pointer text-amber-800" onClick={()=>addToCart(i)} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="p-14 bg-[#FDFBF7] border-t border-amber-100 font-black text-amber-900">
+            <div className="flex justify-between items-end mb-12 text-7xl font-serif">
+               <span className="text-sm font-black text-amber-400 uppercase tracking-[0.6em] mb-4">TOTAL</span>
+               <span>$ {cart.reduce((s,i)=>s+(i.price*i.quantity),0)}</span>
+            </div>
+            <button disabled={cart.length===0} onClick={handleSubmitOrder} className="w-full py-10 bg-amber-800 text-white rounded-[3.5rem] font-black text-3xl hover:bg-amber-900 active:scale-95 transition-all shadow-[0_20px_50px_rgba(0,0,0,0.3)] disabled:opacity-30">正式結帳送單</button>
+          </div>
+        </aside>
+
+        {showLoginModal && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 backdrop-blur-2xl">
+            <div className="absolute inset-0 bg-amber-900/60" onClick={() => setShowLoginModal(false)}></div>
+            <form onSubmit={(e) => { e.preventDefault(); if(passwordInput==='Aeon.1388'){setSystemRole('kitchen');setShowLoginModal(false);} else if(passwordInput==='$Asasouthernaelly,1388'){setSystemRole('admin');setShowLoginModal(false);} else alert('密碼錯誤'); }} className="bg-white p-14 rounded-[5rem] relative z-10 w-full max-w-xl shadow-2xl border border-amber-100 animate-zoom-in">
+              <h2 className="text-center font-black mb-12 text-amber-900 text-4xl tracking-widest uppercase">ASA ACCESS</h2>
+              <div className="relative mb-10">
+                 <input type={showPassword?'text':'password'} placeholder="請輸入通行密碼" value={passwordInput} onChange={(e)=>setPasswordInput(e.target.value)} className="w-full border-4 border-amber-50 rounded-[2.5rem] p-9 text-center text-3xl font-black outline-none focus:border-amber-800 transition-all pr-24 shadow-inner" autoFocus />
+                 <div className="absolute right-8 top-1/2 -translate-y-1/2 text-amber-200 cursor-pointer hover:text-amber-800" onClick={()=>setShowPassword(!showPassword)}>{showPassword?<EyeOff size={44}/>:<Eye size={44}/>}</div>
+              </div>
+              <button className="w-full bg-amber-800 text-white py-9 rounded-[2.5rem] font-black text-3xl shadow-2xl hover:bg-amber-900 active:scale-95 transition-all">正式進入 (ENTER)</button>
+            </form>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // --- 後廚與管理者 (功能保持穩定) ---
+  return (
+    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
+       <header className="p-10 border-b border-slate-800 flex justify-between items-center bg-slate-900/95 sticky top-0 z-50 shadow-2xl">
+          <h1 className="font-black text-3xl flex items-center gap-5 text-amber-500 uppercase tracking-[0.3em]"><ChefHat size={48} /> ASA {systemRole==='kitchen'?'後廚看板':'店長主控室'}</h1>
+          <button onClick={() => setSystemRole('customer')} className="text-xs bg-slate-800 px-10 py-5 rounded-3xl font-black text-slate-400 hover:text-white transition-all border border-slate-700 uppercase">Logout</button>
+       </header>
+       <main className="p-10 flex-1 max-w-[2000px] mx-auto w-full overflow-y-auto">
+          {systemRole === 'kitchen' ? (
+            <div className="space-y-14 animate-fade-in">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div className="p-12 bg-slate-800/80 rounded-[4rem] border border-amber-500/20 shadow-2xl backdrop-blur-md">
+                   <h2 className="text-amber-500 font-black mb-12 flex items-center gap-5 text-3xl uppercase tracking-widest"><TrendingUp size={40} /> 今日熱銷排行 (HOT 5)</h2>
+                   <div className="space-y-5">{hotItems.map((h, i) => (<div key={i} className="bg-slate-900 p-8 rounded-3xl border-l-[16px] border-amber-500 flex justify-between items-center shadow-2xl"><span className="font-black text-2xl">#{i+1} {h.name}</span><span className="text-amber-400 font-black text-4xl">{h.count} <span className="text-sm text-slate-600 font-sans">份</span></span></div>))}</div>
+                </div>
+                <div className="p-12 bg-slate-800/80 rounded-[4rem] border border-amber-500/20 shadow-2xl backdrop-blur-md">
+                   <h2 className="text-amber-500 font-black mb-12 flex items-center gap-5 text-3xl uppercase tracking-widest"><PackagePlus size={40} /> 甜點今日庫存管理</h2>
+                   <div className="space-y-6">
+                      {menuData.find(c=>c.id==='c3')?.items.map(i => (<div key={i.id} className="flex justify-between items-center bg-slate-700 p-8 rounded-3xl border border-slate-600"><span className="font-black text-xl">{i.name}</span><input type="number" value={i.stock} onChange={async(e)=>{ const u = menuData.find(c=>c.id==='c3').items.map(it=>it.id===i.id?{...it,stock:parseInt(e.target.value)}:it); await updateDoc(doc(db,'artifacts',appId,'public','data','menu','c3'),{items:u}); }} className="w-32 bg-slate-900 text-amber-400 rounded-2xl p-5 text-center font-black text-3xl border-none shadow-inner" /></div>))}
+                   </div>
+                </div>
+              </div>
+              <div className="flex gap-12 overflow-x-auto pb-14 no-scrollbar">
+                {orders.filter(o => o.status === 'pending').map(order => (
+                  <div key={order.id} className="w-[500px] bg-slate-800 rounded-[5rem] border-t-[12px] border-amber-500 shadow-[0_30px_60px_rgba(0,0,0,0.5)] flex flex-col shrink-0 animate-fade-in hover:scale-105 transition-all">
+                    <div className="p-10 border-b border-slate-700 font-black flex justify-between items-center text-amber-500">
+                      <div><div className="text-4xl uppercase tracking-tighter">{order.table}</div><div className="text-xs text-slate-500 font-mono mt-3">{order.date} {order.time}</div></div>
+                      <span className="bg-slate-900 px-6 py-3 rounded-2xl text-xs font-mono border border-slate-700 shadow-inner">#{order.id.slice(-4)}</span>
+                    </div>
+                    <div className="p-12 flex-1 space-y-8 font-black">
+                       {order.items.map((it, idx) => <div key={idx} className="flex justify-between border-b border-slate-700/30 pb-4 text-2xl"><span>{it.name}</span><span className="text-amber-400 bg-slate-900 px-6 rounded-2xl shadow-lg">x {it.quantity}</span></div>)}
+                    </div>
+                    <div className="p-10 bg-slate-900/30 rounded-b-[5rem]"><button onClick={async()=>await updateDoc(doc(db,'artifacts',appId,'public', 'data', 'orders', order.id),{status:'completed'})} className="w-full py-10 bg-amber-500 text-slate-900 font-black rounded-[2.5rem] text-3xl shadow-2xl hover:bg-amber-400 active:scale-95 transition-all uppercase">出餐完成 (DONE)</button></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-14 animate-fade-in">
+              <div className="flex gap-6 bg-slate-800 p-3 rounded-[2.5rem] w-fit border border-slate-700 shadow-2xl">
+                <button onClick={()=>setAdminTab('reports')} className={`px-14 py-4 rounded-2xl text-base font-black transition-all ${adminTab==='reports'?'bg-blue-600 text-white shadow-2xl':'text-slate-400 hover:text-white'}`}>報表分析 (ANALYTICS)</button>
+                <button onClick={()=>setAdminTab('products')} className={`px-14 py-4 rounded-2xl text-base font-black transition-all ${adminTab==='products'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>商品管理 (INVENTORY)</button>
+              </div>
+              {adminTab === 'reports' ? (
+                <div className="space-y-12">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                     <div className="bg-gradient-to-br from-blue-600 to-indigo-900 p-16 rounded-[5rem] shadow-2xl flex flex-col justify-between h-[400px] border-4 border-blue-500/20"><span className="font-black text-blue-100 uppercase tracking-[0.5em] text-sm">CUMULATIVE REVENUE</span><h3 className="text-9xl font-black text-white tracking-tighter">$ {orders.reduce((s,o)=>s+o.total, 0).toLocaleString()}</h3></div>
+                     <div className="bg-slate-800 p-16 rounded-[5rem] border-4 border-slate-700 shadow-2xl flex flex-col justify-between h-[400px]"><span className="font-black text-slate-500 uppercase tracking-[0.5em] text-sm">TOTAL ORDERS</span><h3 className="text-9xl font-black text-amber-500 tracking-tighter">{orders.length} <span className="text-4xl text-slate-600">單</span></h3></div>
+                  </div>
+                  <div className="bg-slate-800 p-12 rounded-[4rem] border border-slate-700 shadow-2xl">
+                     <h2 className="text-3xl font-black mb-12 text-blue-400 flex items-center gap-5 uppercase tracking-widest"><BarChart3 size={36} /> 品項銷量數據明細報表</h2>
+                     <table className="w-full text-left font-black"><thead><tr className="text-slate-500 border-b border-slate-700 text-sm uppercase tracking-[0.2em]"><th className="pb-8">商品名稱 (NAME)</th><th className="pb-8 text-center">總銷量 (QTY)</th><th className="pb-8 text-right">小計金額 (SUBTOTAL)</th></tr></thead><tbody>{salesDetail.map((s,i)=>(<tr key={i} className="border-b border-slate-700/30 text-2xl hover:bg-slate-700/40 transition-colors"><td className="py-8">{s.name}</td><td className="py-8 text-center text-amber-500">{s.qty} <span className="text-sm">份</span></td><td className="py-8 text-right text-blue-400">$ {s.subtotal.toLocaleString()}</td></tr>))}</tbody></table>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-12">
+                  <div className="bg-slate-800 p-16 rounded-[4rem] border border-slate-700 shadow-2xl">
+                    <h2 className="text-3xl font-black mb-12 flex items-center gap-5 text-blue-400 uppercase tracking-[0.2em]"><PackagePlus size={44} /> 新增 ASA 品牌商品上架</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                      <div className="space-y-3"><label className="text-xs font-black text-slate-500 ml-4">分類類別</label><select value={newItem.categoryId} onChange={e=>setNewItem({...newItem, categoryId: e.target.value})} className="w-full bg-slate-900 p-6 rounded-3xl border-none font-black text-lg shadow-inner">{menuData.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+                      <div className="space-y-3"><label className="text-xs font-black text-slate-500 ml-4">商品品名</label><input type="text" placeholder="輸入名稱" value={newItem.name} onChange={e=>{const n=e.target.value; setNewItem({...newItem, name:n, poetry:generatePoetry(n)});}} className="w-full bg-slate-900 p-6 rounded-3xl border-none font-black text-lg shadow-inner" /></div>
+                      <div className="space-y-3"><label className="text-xs font-black text-slate-500 ml-4">商品單價</label><input type="number" placeholder="單價" value={newItem.price} onChange={e=>setNewItem({...newItem, price:e.target.value})} className="w-full bg-slate-900 p-6 rounded-3xl border-none font-black text-lg shadow-inner" /></div>
+                      <div className="col-span-full space-y-3"><label className="text-xs font-black text-slate-500 ml-4">AI 智能詩詞發想 (可編輯)</label><input type="text" value={newItem.poetry} onChange={e=>setNewItem({...newItem, poetry:e.target.value})} className="w-full bg-slate-900 p-6 rounded-3xl border border-blue-900/50 italic text-blue-200 text-lg shadow-inner font-serif" /></div>
+                      <div className="col-span-full space-y-3"><label className="text-xs font-black text-slate-500 ml-4">商品照片 URL (建議 Unsplash 網址)</label><input type="text" placeholder="網址" value={newItem.image} onChange={e=>setNewItem({...newItem, image:e.target.value})} className="w-full bg-slate-900 p-6 rounded-3xl border-none font-black text-lg shadow-inner" /></div>
+                      <button onClick={async()=>{ const cat = menuData.find(c=>c.id===newItem.categoryId); const it = { ...newItem, id: `m_${Date.now()}`, price: parseInt(newItem.price), stock: parseInt(newItem.stock) }; await updateDoc(doc(db,'artifacts',appId,'public','data','menu',newItem.categoryId), { items: [...cat.items, it] }); alert('上架成功！'); setNewItem({...newItem, name:'', price:'', poetry:'', image:''}); }} className="col-span-full bg-blue-600 py-8 rounded-[3rem] font-black shadow-2xl active:scale-95 transition-all text-2xl mt-6 uppercase tracking-widest">發佈新品 (PUBLISH NOW)</button>
+                    </div>
+                  </div>
+                  <div className="bg-slate-800 p-12 rounded-[4rem] border border-slate-700 shadow-2xl">
+                    <h2 className="text-3xl font-black mb-12 text-slate-300 uppercase tracking-widest"><ClipboardList size={36} /> 商品狀態監控</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                       {menuData.map(c => c.items.map(i => (
+                        <div key={i.id} className="bg-slate-900 p-8 rounded-[3rem] flex justify-between items-center group border border-slate-700 hover:border-red-500 transition-all shadow-xl">
+                          <div className="flex items-center gap-5"><img src={i.image} className="w-16 h-16 rounded-full object-cover shadow-2xl" /><div><div className="font-black text-lg">{i.name}</div><div className="text-xs text-slate-500 font-bold">$ {i.price}</div></div></div>
+                          <button onClick={async()=>{if(confirm(`確定要將【${i.name}】下架嗎？`)){ const u = c.items.filter(x=>x.id!==i.id); await updateDoc(doc(db,'artifacts',appId,'public','data','menu',c.id),{items:u}); }}} className="p-4 text-slate-700 hover:text-red-500 transition-all"><Trash2 size={24} /></button>
+                        </div>
+                      )))}
+                   </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+       </main>
+    </div>
+  );
+}
