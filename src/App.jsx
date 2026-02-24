@@ -6,7 +6,7 @@ import {
   Utensils, ShoppingBag, BarChart3, Receipt
 } from 'lucide-react';
 
-// --- Firebase 初始化區 ---
+// --- Firebase 初始化區 (保持不變) ---
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc } from 'firebase/firestore';
@@ -174,7 +174,7 @@ export default function CafeSystem() {
 
   if (!isDataLoaded) return <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center font-bold text-amber-800">載入暖心空間...</div>;
 
-  // ================= 顧客端 (木質風格調校) =================
+  // ================= 顧客端 (木質風格 + 版面調整) =================
   if (systemRole === 'customer') {
     if (orderStatus === 'success') {
       return (
@@ -191,12 +191,17 @@ export default function CafeSystem() {
 
     return (
       <div className="min-h-screen bg-[#FDFBF7] font-sans pb-24 lg:pb-0 flex flex-col text-amber-900">
-        {/* 頂部導覽列 */}
+        {/* 頂部導覽列 (已修改：新增 Logo 位置與更名) */}
         <header className="bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-amber-100 px-4 py-4">
           <div className="max-w-5xl mx-auto flex justify-between items-center">
-            <div className="flex items-center gap-2 text-amber-800">
-              <Store size={24} />
-              <h1 className="text-xl font-black tracking-widest font-serif">AURA 南巷微光</h1>
+            <div className="flex items-center gap-3">
+              {/* 這裡就是 Logo 的預留位置，目前先用一個圓形圖示佔位 */}
+              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center overflow-hidden shadow-sm border border-amber-200">
+                <Store size={20} className="text-amber-800" />
+                {/* 未來要換照片時，把上面那行 Store 刪掉，換成下面這行 img 標籤即可 */}
+                {/* <img src="你的Logo網址" alt="Logo" className="w-full h-full object-cover" /> */}
+              </div>
+              <h1 className="text-xl font-black tracking-widest font-serif text-amber-900">ASA 南巷微光</h1>
             </div>
             <div className="flex items-center gap-2">
               <div className="bg-amber-50 p-1 rounded-full border border-amber-100 flex">
@@ -219,30 +224,39 @@ export default function CafeSystem() {
           </div>
         </div>
 
-        {/* 商品列表 */}
+        {/* 商品列表 (已修改：按鈕位置與大小) */}
         <main className="flex-1 max-w-5xl mx-auto px-4 py-8 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:mr-96">
           {menuData.find(c => c.id === activeCategory)?.items.map(item => {
             const quantity = cart.find(c => c.id === item.id)?.quantity || 0;
             return (
               <div key={item.id} className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-amber-50 flex flex-col items-center text-center group hover:shadow-md transition-all">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-amber-50 mb-4 group-hover:scale-105 transition-transform">
+                {/* 1. 照片 */}
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-amber-50 mb-3 group-hover:scale-105 transition-transform">
                   <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                 </div>
-                <h3 className="text-xl font-bold mb-1 text-amber-900">{item.name}</h3>
-                <p className="text-xs text-amber-700/50 mb-4 line-clamp-2 h-8">{item.description}</p>
-                <div className="mt-auto w-full">
-                  <div className="text-xl font-black text-amber-800 mb-4">$ {item.price}</div>
+                
+                {/* 2. 按鈕區 (移到照片下方，並縮小尺寸) */}
+                <div className="mb-4 w-full flex justify-center">
                   {quantity === 0 ? (
-                    <button onClick={() => addToCart(item)} className="w-full bg-amber-800 text-white py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-amber-900 shadow-md active:scale-95 transition-all">
-                      <Plus size={18} /> 加入購物車
+                    // 精緻版加入按鈕
+                    <button onClick={() => addToCart(item)} className="bg-amber-800 text-white px-6 py-2 rounded-full font-bold text-sm flex items-center justify-center gap-1 hover:bg-amber-900 shadow-md active:scale-95 transition-all">
+                      <Plus size={16} /> 加入
                     </button>
                   ) : (
+                    // 精緻版加減控制器
                     <div className="flex items-center justify-between bg-amber-50 rounded-full p-1 border border-amber-100">
-                      <button onClick={() => updateQuantity(item.id, -1)} className="bg-white w-10 h-10 rounded-full flex items-center justify-center shadow-sm text-amber-800"><Minus size={18} /></button>
-                      <span className="font-bold text-lg">{quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)} className="bg-amber-800 w-10 h-10 rounded-full flex items-center justify-center shadow-md text-white"><Plus size={18} /></button>
+                      <button onClick={() => updateQuantity(item.id, -1)} className="bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-sm text-amber-800 active:scale-90 transition-transform"><Minus size={16} /></button>
+                      <span className="font-bold text-base w-8 text-center">{quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, 1)} className="bg-amber-800 w-8 h-8 rounded-full flex items-center justify-center shadow-md text-white active:scale-90 transition-transform"><Plus size={16} /></button>
                     </div>
                   )}
+                </div>
+
+                {/* 3. 文字內容 (標題、描述、價格) */}
+                <h3 className="text-lg font-bold mb-1 text-amber-900">{item.name}</h3>
+                <p className="text-xs text-amber-700/60 mb-3 line-clamp-2 h-8 px-2">{item.description}</p>
+                <div className="mt-auto">
+                  <div className="text-lg font-black text-amber-800">$ {item.price}</div>
                 </div>
               </div>
             );
@@ -323,7 +337,7 @@ export default function CafeSystem() {
        <div className="bg-slate-900 text-white p-4 flex justify-between items-center shadow-lg">
           <div className="flex items-center gap-3">
             <Settings size={20} className="text-amber-400" />
-            <span className="font-bold tracking-widest">南巷微光 • 管理端</span>
+            <span className="font-bold tracking-widest">ASA 南巷微光 • 管理端</span>
           </div>
           <div className="flex gap-2">
             <button onClick={() => setSystemRole('kitchen')} className={`px-4 py-1.5 rounded-lg text-xs font-bold ${systemRole === 'kitchen' ? 'bg-amber-600' : 'bg-slate-800'}`}>後廚</button>
