@@ -152,10 +152,11 @@ export default function CafeSystem() {
 
     // 2. 訂閱雲端菜單資料庫
     const menuRef = collection(db, 'artifacts', appId, 'public', 'data', 'menu');
-    const unsubMenu = onSnapshot(menuRef, (snapshot) => {
-      if (snapshot.empty) {
+       const unsubMenu = onSnapshot(menuRef, (snapshot) => {
+      if (snapshot.size < 4) {
         // 如果雲端完全沒資料，寫入初始預設菜單
         INITIAL_MENU.forEach(async (cat) => {
+
           await setDoc(doc(menuRef, cat.id), cat);
         });
         setMenuData(INITIAL_MENU);
