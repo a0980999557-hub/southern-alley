@@ -6,7 +6,7 @@ import {
   Utensils, ShoppingBag, BarChart3, Receipt
 } from 'lucide-react';
 
-// --- Firebase 初始化區 (保持不變) ---
+// --- Firebase 初始化區 ---
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc } from 'firebase/firestore';
@@ -92,6 +92,7 @@ export default function CafeSystem() {
   const [previewImage, setPreviewImage] = useState(null);
   const [printingOrder, setPrintingOrder] = useState(null);
 
+  // 初始化登入與資料監聽
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -101,6 +102,7 @@ export default function CafeSystem() {
           await signInAnonymously(auth);
         }
       } catch (error) {
+        console.error("驗證失敗:", error);
         setMenuData(INITIAL_MENU);
         setIsDataLoaded(true);
       }
@@ -172,16 +174,16 @@ export default function CafeSystem() {
     setIsCartOpen(false);
   };
 
-  if (!isDataLoaded) return <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center font-bold text-amber-800">載入暖心空間...</div>;
+  if (!isDataLoaded) return <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center font-bold text-amber-800">載入 ASA 暖心空間...</div>;
 
-  // ================= 顧客端 (木質風格 + 版面調整) =================
+  // ================= 顧客端 (木質風格 + 版面優化) =================
   if (systemRole === 'customer') {
     if (orderStatus === 'success') {
       return (
-        <div className="min-h-screen bg-[#FDFBF7] flex flex-col items-center justify-center p-6">
+        <div className="min-h-screen bg-[#FDFBF7] flex flex-col items-center justify-center p-6 text-amber-900">
           <div className="bg-white p-8 rounded-[2.5rem] shadow-xl max-w-sm w-full text-center border border-amber-100">
             <CheckCircle2 className="text-amber-600 mx-auto mb-4" size={80} />
-            <h2 className="text-2xl font-bold text-amber-900 mb-2">訂單已送出</h2>
+            <h2 className="text-2xl font-bold mb-2">訂單已送出</h2>
             <p className="text-amber-700/60 text-sm mb-6">您的餐點正由職人用心準備中。</p>
             <button onClick={() => {setCart([]); setOrderStatus('ordering');}} className="w-full bg-amber-800 text-white font-bold py-4 rounded-2xl hover:bg-amber-900 transition-all">返回菜單</button>
           </div>
@@ -191,17 +193,13 @@ export default function CafeSystem() {
 
     return (
       <div className="min-h-screen bg-[#FDFBF7] font-sans pb-24 lg:pb-0 flex flex-col text-amber-900">
-        {/* 頂部導覽列 (已修改：新增 Logo 位置與更名) */}
         <header className="bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-amber-100 px-4 py-4">
           <div className="max-w-5xl mx-auto flex justify-between items-center">
             <div className="flex items-center gap-3">
-              {/* 這裡就是 Logo 的預留位置，目前先用一個圓形圖示佔位 */}
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center overflow-hidden shadow-sm border border-amber-200">
-                <Store size={20} className="text-amber-800" />
-                {/* 未來要換照片時，把上面那行 Store 刪掉，換成下面這行 img 標籤即可 */}
-                {/* <img src="你的Logo網址" alt="Logo" className="w-full h-full object-cover" /> */}
+              <div className="w-10 h-10 bg-amber-800 rounded-full flex items-center justify-center overflow-hidden shadow-inner border border-amber-900/10">
+                <Store size={20} className="text-amber-50" />
               </div>
-              <h1 className="text-xl font-black tracking-widest font-serif text-amber-900">ASA 南巷微光</h1>
+              <h1 className="text-xl font-black tracking-widest font-serif text-amber-900 uppercase">ASA 南巷微光</h1>
             </div>
             <div className="flex items-center gap-2">
               <div className="bg-amber-50 p-1 rounded-full border border-amber-100 flex">
@@ -213,7 +211,6 @@ export default function CafeSystem() {
           </div>
         </header>
 
-        {/* 分類滑動條 */}
         <div className="bg-white/50 sticky top-[73px] z-10 border-b border-amber-50">
           <div className="max-w-5xl mx-auto px-4 py-4 flex gap-3 overflow-x-auto no-scrollbar">
             {menuData.map(cat => (
@@ -224,46 +221,38 @@ export default function CafeSystem() {
           </div>
         </div>
 
-        {/* 商品列表 (已修改：按鈕位置與大小) */}
         <main className="flex-1 max-w-5xl mx-auto px-4 py-8 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:mr-96">
           {menuData.find(c => c.id === activeCategory)?.items.map(item => {
             const quantity = cart.find(c => c.id === item.id)?.quantity || 0;
             return (
               <div key={item.id} className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-amber-50 flex flex-col items-center text-center group hover:shadow-md transition-all">
-                {/* 1. 照片 */}
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-amber-50 mb-3 group-hover:scale-105 transition-transform">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-amber-50 mb-3 group-hover:scale-105 transition-transform bg-amber-50 shadow-inner">
                   <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                 </div>
                 
-                {/* 2. 按鈕區 (移到照片下方，並縮小尺寸) */}
-                <div className="mb-4 w-full flex justify-center">
+                {/* 優化：價格在前，按鈕縮小 */}
+                <div className="mb-4 w-full flex items-center justify-center gap-3">
+                  <span className="text-xl font-black text-amber-800">${item.price}</span>
                   {quantity === 0 ? (
-                    // 精緻版加入按鈕
-                    <button onClick={() => addToCart(item)} className="bg-amber-800 text-white px-6 py-2 rounded-full font-bold text-sm flex items-center justify-center gap-1 hover:bg-amber-900 shadow-md active:scale-95 transition-all">
-                      <Plus size={16} /> 加入
+                    <button onClick={() => addToCart(item)} className="bg-amber-800 text-white px-5 py-2 rounded-full font-bold text-xs flex items-center justify-center gap-1 hover:bg-amber-900 shadow-sm active:scale-95 transition-all">
+                      <Plus size={14} /> 加入
                     </button>
                   ) : (
-                    // 精緻版加減控制器
-                    <div className="flex items-center justify-between bg-amber-50 rounded-full p-1 border border-amber-100">
-                      <button onClick={() => updateQuantity(item.id, -1)} className="bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-sm text-amber-800 active:scale-90 transition-transform"><Minus size={16} /></button>
-                      <span className="font-bold text-base w-8 text-center">{quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)} className="bg-amber-800 w-8 h-8 rounded-full flex items-center justify-center shadow-md text-white active:scale-90 transition-transform"><Plus size={16} /></button>
+                    <div className="flex items-center bg-amber-50 rounded-full p-0.5 border border-amber-100">
+                      <button onClick={() => updateQuantity(item.id, -1)} className="bg-white w-7 h-7 rounded-full flex items-center justify-center shadow-sm text-amber-800 active:scale-90"><Minus size={14} /></button>
+                      <span className="font-bold text-sm w-7 text-center">{quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, 1)} className="bg-amber-800 w-7 h-7 rounded-full flex items-center justify-center shadow-md text-white active:scale-90"><Plus size={14} /></button>
                     </div>
                   )}
                 </div>
 
-                {/* 3. 文字內容 (標題、描述、價格) */}
-                <h3 className="text-lg font-bold mb-1 text-amber-900">{item.name}</h3>
-                <p className="text-xs text-amber-700/60 mb-3 line-clamp-2 h-8 px-2">{item.description}</p>
-                <div className="mt-auto">
-                  <div className="text-lg font-black text-amber-800">$ {item.price}</div>
-                </div>
+                <h3 className="text-lg font-bold mb-1 text-amber-900 leading-tight">{item.name}</h3>
+                <p className="text-[10px] text-amber-700/50 mb-3 line-clamp-2 h-7 px-2 italic">{item.description}</p>
               </div>
             );
           })}
         </main>
 
-        {/* 桌面側邊購物車 */}
         <aside className="hidden lg:flex w-96 bg-white border-l border-amber-100 fixed right-0 top-0 bottom-0 flex-col shadow-xl z-30">
           <div className="p-8 border-b border-amber-50 bg-[#FDFBF7]">
             <h2 className="text-2xl font-black font-serif flex items-center gap-3"><ShoppingCart className="text-amber-800" /> 您的餐點</h2>
@@ -272,14 +261,14 @@ export default function CafeSystem() {
             {cart.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-amber-200">
                 <Coffee size={48} className="mb-4 opacity-20" />
-                <p className="font-bold">挑選一些溫暖的品項吧</p>
+                <p className="font-bold">選份溫暖，點亮微光</p>
               </div>
             ) : (
               cart.map(item => (
-                <div key={item.id} className="flex justify-between items-center">
+                <div key={item.id} className="flex justify-between items-center text-sm">
                   <div>
                     <div className="font-bold text-amber-900">{item.name}</div>
-                    <div className="text-xs text-amber-500 font-bold">${item.price} × {item.quantity}</div>
+                    <div className="text-[10px] text-amber-500 font-bold">${item.price} × {item.quantity}</div>
                   </div>
                   <div className="font-bold text-amber-800">${item.price * item.quantity}</div>
                 </div>
@@ -288,42 +277,39 @@ export default function CafeSystem() {
           </div>
           <div className="p-8 bg-[#FDFBF7] border-t border-amber-100">
             <div className="flex justify-between items-end mb-6">
-              <span className="font-bold text-amber-700/60">總計金額</span>
-              <span className="text-4xl font-black text-amber-900"><span className="text-xl mr-1">$</span>{totalAmount}</span>
+              <span className="font-bold text-amber-700/60 text-xs">總計金額</span>
+              <span className="text-4xl font-black text-amber-900"><span className="text-xl mr-1 font-serif">$</span>{totalAmount}</span>
             </div>
-            <button disabled={cart.length === 0} onClick={handleSubmitOrder} className="w-full py-5 bg-amber-800 text-white rounded-[2rem] font-bold text-lg shadow-xl hover:bg-amber-900 disabled:bg-amber-100 transition-all">送出訂單</button>
+            <button disabled={cart.length === 0} onClick={handleSubmitOrder} className="w-full py-5 bg-amber-800 text-white rounded-[2rem] font-bold text-lg shadow-xl hover:bg-amber-900 disabled:bg-amber-100 transition-all active:scale-95">確認送出訂單</button>
           </div>
         </aside>
 
-        {/* 手機版懸浮購物車 */}
         <div className="lg:hidden fixed bottom-6 left-4 right-4 z-40">
-          <div className="bg-amber-900 rounded-full p-2 flex items-center justify-between shadow-2xl border border-amber-700">
+          <div className="bg-amber-900 rounded-full p-2 flex items-center justify-between shadow-2xl border border-amber-700 backdrop-blur-md">
             <div className="flex items-center gap-4 pl-4">
               <div className="relative">
                 <ShoppingCart className="text-white" size={24} />
                 {totalItems > 0 && <span className="absolute -top-2 -right-2 bg-amber-100 text-amber-900 text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">{totalItems}</span>}
               </div>
-              <div>
-                <div className="text-white font-black text-xl">${totalAmount}</div>
-              </div>
+              <div className="text-white font-black text-xl">${totalAmount}</div>
             </div>
-            <button disabled={cart.length === 0} onClick={() => setIsCartOpen(true)} className="bg-white text-amber-900 px-8 py-3 rounded-full font-bold text-sm shadow-md active:scale-95">查看明細</button>
+            <button disabled={cart.length === 0} onClick={() => setIsCartOpen(true)} className="bg-white text-amber-900 px-8 py-3 rounded-full font-bold text-sm active:scale-95 transition-transform">明細</button>
           </div>
         </div>
 
-        {/* 員工登入視窗 */}
+        {/* 員工登入彈窗 */}
         {showLoginModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-amber-900/40 backdrop-blur-sm" onClick={() => setShowLoginModal(false)}></div>
             <form onSubmit={(e) => {
               e.preventDefault();
-              if (passwordInput === 'Aeon.1388') { setSystemRole('admin'); setShowLoginModal(false); }
+              if (passwordInput === 'Aeon.1388') { setSystemRole('kitchen'); setShowLoginModal(false); }
               else { setLoginError('密碼錯誤'); }
             }} className="bg-white p-8 rounded-[2.5rem] shadow-2xl relative z-10 w-full max-w-sm border border-amber-100">
-              <h2 className="text-2xl font-bold text-center mb-6 text-amber-900">店鋪管理登入</h2>
-              <input type="password" placeholder="請輸入密碼" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} className="w-full border-2 border-amber-50 rounded-2xl p-4 mb-4 text-center text-lg outline-none focus:border-amber-800 transition-colors" />
-              {loginError && <p className="text-red-500 text-center text-sm mb-4 font-bold">{loginError}</p>}
-              <button className="w-full bg-amber-800 text-white py-4 rounded-2xl font-bold hover:bg-amber-900 transition-all">確認進入</button>
+              <h2 className="text-2xl font-bold text-center mb-6 text-amber-900 font-serif">店鋪管理登入</h2>
+              <input type="password" placeholder="請輸入密碼" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} className="w-full border-2 border-amber-50 rounded-2xl p-4 mb-4 text-center text-lg outline-none focus:border-amber-800" />
+              {loginError && <p className="text-red-500 text-center text-xs mb-4 font-bold">{loginError}</p>}
+              <button className="w-full bg-amber-800 text-white py-4 rounded-2xl font-bold hover:bg-amber-900 transition-all">進入後台</button>
             </form>
           </div>
         )}
@@ -331,23 +317,57 @@ export default function CafeSystem() {
     );
   }
 
-  // ================= 員工後台 (保持原色調以便區分功能) =================
+  // ================= 員工後台 (KITCHEN & ADMIN) =================
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-       <div className="bg-slate-900 text-white p-4 flex justify-between items-center shadow-lg">
+    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
+       <header className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <Settings size={20} className="text-amber-400" />
-            <span className="font-bold tracking-widest">ASA 南巷微光 • 管理端</span>
+            <div className="bg-amber-500 w-8 h-8 rounded-lg flex items-center justify-center text-slate-900">
+              <ChefHat size={18} />
+            </div>
+            <h1 className="font-bold tracking-widest text-lg">ASA 後廚看板</h1>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setSystemRole('kitchen')} className={`px-4 py-1.5 rounded-lg text-xs font-bold ${systemRole === 'kitchen' ? 'bg-amber-600' : 'bg-slate-800'}`}>後廚</button>
-            <button onClick={() => setSystemRole('admin')} className={`px-4 py-1.5 rounded-lg text-xs font-bold ${systemRole === 'admin' ? 'bg-blue-600' : 'bg-slate-800'}`}>報表</button>
-            <button onClick={() => setSystemRole('customer')} className="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-700">登出</button>
+            <button onClick={() => setSystemRole('customer')} className="px-4 py-2 rounded-lg bg-slate-800 text-xs font-bold hover:bg-amber-500 hover:text-slate-900 transition-all flex items-center gap-2">
+              <LogOut size={14} /> 登出
+            </button>
           </div>
-       </div>
-       <div className="flex-1 flex items-center justify-center p-8 text-slate-400 font-bold italic">
-          後台管理介面已連線至雲端資料庫... 點擊上方切換功能
-       </div>
+       </header>
+
+       <main className="p-6 flex-1 overflow-x-auto">
+          <div className="flex gap-6 min-w-max h-full">
+            {orders.filter(o => o.status === 'pending').map(order => (
+              <div key={order.id} className="w-80 bg-slate-800 rounded-2xl border-t-4 border-amber-500 shadow-2xl flex flex-col">
+                <div className="p-4 border-b border-slate-700 flex justify-between items-center">
+                  <span className="font-black text-xl text-amber-500">{order.table}</span>
+                  <span className="text-[10px] font-mono text-slate-500">#{order.id}</span>
+                </div>
+                <div className="p-4 flex-1 space-y-4">
+                   {order.items.map((item, idx) => (
+                     <div key={idx} className="flex justify-between items-start border-b border-slate-700/50 pb-2">
+                        <div className="font-bold text-lg">{item.name}</div>
+                        <div className="bg-slate-700 px-2 py-1 rounded-md font-black text-amber-400">x{item.quantity}</div>
+                     </div>
+                   ))}
+                </div>
+                <div className="p-4 bg-slate-800/50 border-t border-slate-700">
+                   <button 
+                    onClick={async () => await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', order.id), { status: 'completed' })}
+                    className="w-full py-4 bg-amber-500 text-slate-900 font-bold rounded-xl hover:bg-amber-400 transition-colors"
+                   >
+                     出餐完成
+                   </button>
+                </div>
+              </div>
+            ))}
+            {orders.filter(o => o.status === 'pending').length === 0 && (
+              <div className="w-full flex flex-col items-center justify-center text-slate-600 gap-4 opacity-30">
+                <Clock size={64} />
+                <div className="text-xl font-bold tracking-widest">目前沒有待製作訂單</div>
+              </div>
+            )}
+          </div>
+       </main>
     </div>
   );
 }
