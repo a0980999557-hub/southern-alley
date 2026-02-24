@@ -299,4 +299,127 @@ export default function CafeSystem() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-8 bg-slate-800 rounded-3xl border border-amber-500/20">
                    <h2 className="text-amber-500 font-black mb-6 flex items-center gap-2 tracking-widest uppercase"><TrendingUp size={24} /> 今日熱銷排行</h2>
-                   <div className
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     {hotItems.map((h, i) => (
+                       <div key={i} className="bg-slate-900 p-4 rounded-2xl border-l-4 border-amber-500 flex flex-col">
+                         <span className="text-[10px] text-slate-500 font-bold uppercase">NO.{i+1}</span>
+                         <span className="font-bold text-sm truncate">{h.name}</span>
+                         <span className="text-amber-400 font-black text-xl">{h.count} 份</span>
+                       </div>
+                     ))}
+                   </div>
+                </div>
+                {/* 甜點庫存修正 */}
+                <div className="p-8 bg-slate-800 rounded-3xl border border-amber-500/20">
+                   <h2 className="text-amber-500 font-black mb-6 flex items-center gap-2 tracking-widest uppercase"><PackagePlus size={24} /> 甜點今日庫存管理</h2>
+                   <div className="space-y-3">
+                      {menuData.find(c=>c.id==='c3')?.items.map(i => (
+                        <div key={i.id} className="flex justify-between items-center bg-slate-700 p-3 rounded-xl">
+                           <span className="font-bold text-sm">{i.name}</span>
+                           <input type="number" value={i.stock} onChange={async(e)=>{
+                             const u = menuData.find(c=>c.id==='c3').items.map(it=>it.id===i.id?{...it,stock:parseInt(e.target.value)}:it);
+                             await updateDoc(doc(db,'artifacts',appId,'public','data','menu','c3'),{items:u});
+                           }} className="w-20 bg-slate-900 text-amber-500 rounded-lg p-2 text-center font-black" />
+                        </div>
+                      ))}
+                   </div>
+                </div>
+              </div>
+
+              <div className="flex gap-6 overflow-x-auto pb-6 no-scrollbar">
+                {orders.filter(o => o.status === 'pending').map(order => (
+                  <div key={order.id} className="w-85 bg-slate-800 rounded-3xl border-t-4 border-amber-500 shadow-2xl flex flex-col shrink-0 animate-fade-in">
+                    <div className="p-5 border-b border-slate-700 font-black text-xl text-amber-500 flex justify-between items-center">
+                      <div><span>{order.table}</span><div className="text-[10px] text-slate-500">{order.date} {order.time}</div></div>
+                      <span className="text-[10px] font-mono">#{order.id.slice(-4)}</span>
+                    </div>
+                    <div className="p-5 flex-1 space-y-3 font-bold">
+                       {order.items.map((it, idx) => <div key={idx} className="flex justify-between border-b border-slate-700/30 pb-1"><span>{it.name}</span><span className="text-amber-400 px-2 rounded bg-slate-900">x{it.quantity}</span></div>)}
+                    </div>
+                    <div className="p-5 border-t border-slate-700"><button onClick={async()=>await updateDoc(doc(db,'artifacts',appId,'public', 'data', 'orders', order.id),{status:'completed'})} className="w-full py-4 bg-amber-500 text-slate-900 font-black rounded-2xl">出餐完成</button></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {systemRole === 'admin' && (
+            <div className="space-y-8 animate-fade-in">
+              <div className="flex gap-2 bg-slate-800 p-1 rounded-2xl w-fit">
+                <button onClick={()=>setAdminTab('reports')} className={`px-8 py-2 rounded-xl text-xs font-bold ${adminTab==='reports'?'bg-blue-600 shadow-lg':''}`}>營收報表</button>
+                <button onClick={()=>setAdminTab('products')} className={`px-8 py-2 rounded-xl text-xs font-bold ${adminTab==='products'?'bg-blue-600 shadow-lg':''}`}>商品管理</button>
+              </div>
+
+              {adminTab === 'reports' ? (
+                <div className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="bg-blue-600 p-10 rounded-[2.5rem] shadow-2xl flex flex-col justify-between h-56">
+                      <span className="font-bold text-blue-100 uppercase tracking-widest text-xs">當日雲端累計總營收</span>
+                      <h3 className="text-6xl font-black text-white">$ {orders.reduce((s,o)=>s+o.total, 0).toLocaleString()}</h3>
+                    </div>
+                    <div className="bg-slate-800 p-10 rounded-[2.5rem] border border-slate-700 flex flex-col justify-between h-56">
+                      <span className="font-bold text-slate-500 uppercase tracking-widest text-xs">總處理單數</span>
+                      <h3 className="text-6xl font-black text-amber-500">{orders.length} <span className="text-xl">單</span></h3>
+                    </div>
+                  </div>
+                  {/* 商品銷售明細表格 */}
+                  <div className="bg-slate-800 p-8 rounded-3xl border border-slate-700">
+                     <h2 className="text-xl font-bold mb-6 text-blue-400">當日各品項銷量統計表</h2>
+                     <table className="w-full text-left text-sm font-bold">
+                        <thead className="text-slate-500 border-b border-slate-700 uppercase">
+                           <tr><th className="py-4 px-2">商品名稱</th><th className="py-4 px-2">總銷量</th><th className="py-4 px-2 text-right">小計金額</th></tr>
+                        </thead>
+                        <tbody>
+                           {salesDetail.map((s,i)=>(
+                             <tr key={i} className="border-b border-slate-700/30">
+                               <td className="py-4 px-2">{s.name}</td>
+                               <td className="py-4 px-2 text-amber-500">{s.qty} 份</td>
+                               <td className="py-4 px-2 text-right text-blue-400">$ {s.subtotal.toLocaleString()}</td>
+                             </tr>
+                           ))}
+                        </tbody>
+                     </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* 補齊上架欄位 */}
+                  <div className="bg-slate-800 p-10 rounded-[2.5rem] border border-slate-700 shadow-2xl">
+                    <h2 className="text-xl font-black mb-8 flex items-center gap-2 text-blue-400 uppercase tracking-widest"><PackagePlus /> 新增 ASA 商品上架</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <select value={newItem.categoryId} onChange={e=>setNewItem({...newItem, categoryId: e.target.value})} className="bg-slate-900 p-4 rounded-2xl border-none font-bold text-sm">
+                        {menuData.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                      <input type="text" placeholder="商品名稱" value={newItem.name} onChange={e=>{const n=e.target.value; setNewItem({...newItem, name: n, poetry: generatePoetry(n)});}} className="bg-slate-900 p-4 rounded-2xl border-none font-bold text-sm" />
+                      <input type="number" placeholder="單價 (NT$)" value={newItem.price} onChange={e=>setNewItem({...newItem, price: e.target.value})} className="bg-slate-900 p-4 rounded-2xl border-none font-bold text-sm" />
+                      <input type="text" placeholder="詩詞描述 (AI 自動發想)" value={newItem.poetry} onChange={e=>setNewItem({...newItem, poetry: e.target.value})} className="col-span-full bg-slate-900 p-4 rounded-2xl border border-blue-900/50 italic text-blue-200" />
+                      <input type="text" placeholder="照片網址 URL" value={newItem.image} onChange={e=>setNewItem({...newItem, image: e.target.value})} className="col-span-full bg-slate-900 p-4 rounded-2xl border-none font-bold text-sm" />
+                      <button onClick={async()=>{
+                        const cat = menuData.find(c=>c.id===newItem.categoryId);
+                        const it = { ...newItem, id: `m_${Date.now()}`, price: parseInt(newItem.price) };
+                        await updateDoc(doc(db,'artifacts',appId,'public','data','menu',newItem.categoryId), { items: [...cat.items, it] });
+                        alert('ASA 商品已成功上架！');
+                        setNewItem({...newItem, name: '', price: '', poetry: '', image: ''});
+                      }} className="col-span-full bg-blue-600 py-5 rounded-[2rem] font-black shadow-lg shadow-blue-500/20 active:scale-95 transition-all">正式上架商品</button>
+                    </div>
+                  </div>
+                  {/* 已上架清單 */}
+                  <div className="bg-slate-800 p-8 rounded-3xl border border-slate-700">
+                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-400 uppercase tracking-widest"><ClipboardList /> 已上架商品清單 (點選垃圾桶下架)</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                       {menuData.map(c => c.items.map(i => (
+                        <div key={i.id} className="bg-slate-900 p-4 rounded-2xl flex justify-between items-center group border border-slate-700 hover:border-red-500">
+                          <span className="font-bold text-sm">{i.name}</span>
+                          <button onClick={async()=>{if(confirm('下架商品？')){ const u = c.items.filter(x=>x.id!==i.id); await updateDoc(doc(db,'artifacts',appId,'public','data','menu',c.id),{items:u}); }}} className="text-slate-600 group-hover:text-red-500"><Trash2 size={18} /></button>
+                        </div>
+                      )))}
+                   </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+       </main>
+    </div>
+  );
+}
