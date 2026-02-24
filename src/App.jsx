@@ -143,10 +143,10 @@ export default function CafeSystem() {
           <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl text-center border border-amber-100 max-w-sm w-full animate-fade-in">
             <CheckCircle2 className="text-amber-600 mx-auto mb-4" size={70} />
             <h2 className="text-2xl font-black mb-4 uppercase">點餐成功</h2>
-            <div className="bg-amber-50 p-6 rounded-2xl text-left space-y-2 mb-6 border border-amber-100">
-              <div className="text-[10px] text-amber-800 font-black mb-2 border-b border-amber-200 pb-1">單號：{lastOrder?.id}</div>
-              {lastOrder?.items.map((i,idx)=><div key={idx} className="text-[11px] font-bold flex justify-between"><span>{i.name} x {i.quantity}</span><span>$ {i.price*i.quantity}</span></div>)}
-              <div className="border-t border-amber-200 mt-2 pt-2 text-right font-black text-xl text-amber-900">$ {lastOrder?.total}</div>
+            <div className="bg-amber-50 p-6 rounded-2xl text-left space-y-2 mb-6 border border-amber-100 font-bold">
+              <div className="text-[10px] text-amber-800 border-b border-amber-200 pb-1">單號：{lastOrder?.id}</div>
+              {lastOrder?.items.map((i,idx)=><div key={idx} className="text-[11px] flex justify-between"><span>{i.name} x {i.quantity}</span><span>$ {i.price*i.quantity}</span></div>)}
+              <div className="border-t border-amber-200 mt-2 pt-2 text-right text-xl text-amber-900">$ {lastOrder?.total}</div>
             </div>
             <button onClick={()=>{setCart([]); setOrderStatus('ordering');}} className="w-full bg-amber-800 text-white py-4 rounded-2xl font-bold active:scale-95 shadow-lg">返回首頁</button>
           </div>
@@ -159,10 +159,10 @@ export default function CafeSystem() {
           <div className="max-w-7xl mx-auto flex justify-between items-center">
             <div className="flex items-center gap-3">
               <img src="https://i.postimg.cc/1tTJBrLd/Gemini-Generated-Image-7uf38w7uf38w7uf3.png" className="w-12 h-12 rounded-full object-cover shadow-xl border-2 border-amber-900/10" alt="ASA Logo" />
-              <h1 className="text-xl md:text-2xl font-black font-serif">ASA 南巷微光</h1>
+              <h1 className="text-xl md:text-2xl font-black font-serif tracking-tighter">ASA 南巷微光</h1>
             </div>
             <div className="flex items-center gap-4">
-               <button onClick={()=>setSearchResult('searching')} className="p-3 text-amber-400 hover:text-amber-800 flex items-center gap-2 text-[12px] font-black bg-amber-50 rounded-2xl transition-all shadow-sm"><Search size={16}/> 查進度</button>
+               <button onClick={()=>setSearchResult('searching')} className="p-3 text-amber-400 hover:text-amber-800 flex items-center gap-2 text-[12px] font-black bg-amber-50 rounded-2xl transition-all"><Search size={16}/> 查進度</button>
                <button onClick={()=>{setPasswordInput(''); setShowLoginModal(true);}} className="p-3 bg-amber-800 text-white rounded-2xl shadow-lg active:scale-90 flex items-center justify-center transition-all"><Lock size={20}/></button>
             </div>
           </div>
@@ -172,7 +172,7 @@ export default function CafeSystem() {
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-md">
             <div className="absolute inset-0 bg-black/60" onClick={()=>setSearchResult(null)}></div>
             <div className="bg-white p-8 rounded-[2rem] relative z-201 w-full max-w-sm shadow-2xl">
-               <div className="flex justify-between items-center mb-6"><h3 className="font-black text-lg tracking-widest uppercase text-amber-900">訂單狀態</h3><X onClick={()=>setSearchResult(null)} className="cursor-pointer text-slate-300" /></div>
+               <div className="flex justify-between items-center mb-6"><h3 className="font-black text-lg tracking-widest uppercase">訂單狀態</h3><X onClick={()=>setSearchResult(null)} className="cursor-pointer text-slate-300" /></div>
                <div className="flex gap-2 mb-6"><input type="text" placeholder="末四碼" value={searchId} onChange={e=>setSearchId(e.target.value)} className="flex-1 bg-amber-50 p-4 rounded-xl outline-none font-bold text-sm shadow-inner" /><button onClick={()=>{const f=orders.find(o=>o.id.includes(searchId)); setSearchResult(f||'none')}} className="bg-amber-800 text-white px-6 rounded-xl active:scale-90 shadow-lg"><Search size={18}/></button></div>
                {searchResult && searchResult !== 'searching' && searchResult !== 'none' && (
                  <div className="bg-amber-50 p-6 rounded-2xl border border-amber-200"><div className="flex justify-between items-center mb-4"><span className="font-black text-xs text-amber-900">{searchResult.id}</span><span className={`px-4 py-1 rounded-full text-[10px] font-black ${searchResult.status==='pending'?'bg-amber-200 text-amber-800 animate-pulse':'bg-green-600 text-white'}`}>{searchResult.status==='pending'?'製作中':'已完成'}</span></div></div>
@@ -185,7 +185,7 @@ export default function CafeSystem() {
           <div className="max-w-7xl mx-auto px-4 py-4 flex gap-4 overflow-x-auto no-scrollbar justify-start md:justify-center">
             {menuData.map(cat => (
               <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`flex items-center flex-col justify-center rounded-full transition-all shadow-sm shrink-0 ${activeCategory === cat.id ? 'bg-amber-800 text-white w-20 h-20 md:w-22 md:h-22 scale-105 ring-4 ring-amber-50' : 'bg-white text-amber-600 border border-amber-100 w-20 h-20 md:w-22 md:h-22 opacity-70 hover:opacity-100'}`}>
-                <span className="text-[14px] md:text-sm font-black text-center leading-tight uppercase px-2">{cat.name}</span>
+                <span className="text-[14px] md:text-sm font-black px-2">{cat.name}</span>
               </button>
             ))}
           </div>
@@ -222,7 +222,7 @@ export default function CafeSystem() {
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsCartOpen(false)}></div>
             <div className="bg-white w-full rounded-t-[2.5rem] relative p-8 shadow-2xl animate-slide-up max-h-[80vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6"><h2 className="text-lg font-black uppercase text-amber-900 tracking-widest text-center">ORDER DETAILS</h2><X onClick={()=>setIsCartOpen(false)} size={24} className="text-amber-200" /></div>
-              <div className="bg-amber-50 p-5 rounded-2xl space-y-4 mb-6 border border-amber-100 shadow-inner text-center">
+              <div className="bg-amber-50 p-5 rounded-2xl space-y-4 mb-6 border border-amber-100 shadow-inner text-center font-bold">
                 <div className="flex gap-2 bg-white p-1 rounded-xl shadow-inner"><button onClick={()=>setOrderType('dineIn')} className={`flex-1 py-2 text-sm font-black rounded-lg transition-all ${orderType==='dineIn'?'bg-amber-800 text-white shadow-md':'text-amber-300'}`}>內用</button><button onClick={()=>setOrderType('takeout')} className={`flex-1 py-2 text-sm font-black rounded-lg transition-all ${orderType==='takeout'?'bg-amber-800 text-white shadow-md':'text-amber-300'}`}>外帶</button></div>
                 <input type="text" placeholder={orderType==='dineIn'?'請輸入您的桌號':'手機末三碼'} value={orderType==='dineIn'?tableNumber:phoneSuffix} onChange={e=>orderType==='dineIn'?setTableNumber(e.target.value):setPhoneSuffix(e.target.value)} className="w-full bg-white rounded-xl p-3 text-xl font-black shadow-sm outline-none text-center placeholder-amber-200" />
               </div>
@@ -247,23 +247,28 @@ export default function CafeSystem() {
             </div>
             <div className="space-y-4">
               {cart.map((i,idx) => (
-                <div key={idx} className="flex justify-between items-center font-bold text-sm bg-white p-5 rounded-2xl border border-amber-50 shadow-sm transition-all hover:shadow-md">
+                <div key={idx} className="flex justify-between items-center font-bold text-sm bg-white p-5 rounded-2xl border border-amber-50 shadow-sm transition-all hover:shadow-md text-amber-900">
                   <div className="flex-1"><div>{i.name}</div><div className="text-[10px] text-amber-500 font-black mt-1">$ {i.price}</div></div>
-                  <div className="flex items-center gap-4 bg-amber-50 px-3 py-1.5 rounded-full"><Minus size={14} className="cursor-pointer text-amber-800" onClick={()=>setCart(prev=>prev.map(x=>x.id===i.id?{...x,quantity:Math.max(0,x.quantity-1)}:x).filter(x=>x.quantity>0))} /><span className="font-black text-base text-amber-900">{i.quantity}</span><Plus size={14} className="cursor-pointer text-amber-800" onClick={()=>addToCart(i)} /></div>
+                  <div className="flex items-center gap-4 bg-amber-50 px-3 py-1.5 rounded-full"><Minus size={14} className="cursor-pointer text-amber-800" onClick={()=>setCart(prev=>prev.map(x=>x.id===i.id?{...x,quantity:Math.max(0,x.quantity-1)}:x).filter(x=>x.quantity>0))} /><span className="font-black text-base">{i.quantity}</span><Plus size={14} className="cursor-pointer text-amber-800" onClick={()=>addToCart(i)} /></div>
                 </div>
               ))}
             </div>
           </div>
           <div className="p-8 bg-[#FDFBF7] border-t border-amber-100 font-black text-amber-900">
             <div className="flex justify-between items-end mb-6 text-3xl font-serif font-black"><span className="text-[11px] font-black text-amber-400 uppercase tracking-widest mb-1">TOTAL</span><span>$ {cart.reduce((s,i)=>s+(i.price*i.quantity),0)}</span></div>
-            <button disabled={cart.length===0} onClick={handleSubmitOrder} className="w-full py-5 bg-amber-800 text-white rounded-2xl font-black text-base shadow-xl active:scale-95 transition-all">正式送出訂單</button>
+            <button disabled={cart.length===0} onClick={handleSubmitOrder} className="w-full py-5 bg-amber-800 text-white rounded-2xl font-black text-sm shadow-xl active:scale-95 transition-all">正式送出訂單</button>
           </div>
         </aside>
 
         {showLoginModal && (
           <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 backdrop-blur-xl">
             <div className="absolute inset-0 bg-amber-900/60" onClick={() => setShowLoginModal(false)}></div>
-            <form onSubmit={(e) => { e.preventDefault(); if(passwordInput==='Aeon.1388'){setSystemRole('kitchen');setShowLoginModal(false);} else if(passwordInput==='$Asasouthernaelly,1388'){setSystemRole('admin');setShowLoginModal(false);} else alert('密碼錯誤'); }} className="bg-white p-10 rounded-[2.5rem] relative z-10 w-full max-w-sm shadow-2xl border border-amber-100 animate-zoom-in">
+            <form onSubmit={(e) => { 
+              e.preventDefault(); 
+              if(passwordInput==='Aeon.1388'){ setSystemRole('kitchen'); setShowLoginModal(false); } 
+              else if(passwordInput==='$Asasouthernaelly,1388'){ setSystemRole('admin'); setShowLoginModal(false); } 
+              else alert('密碼錯誤'); 
+            }} className="bg-white p-10 rounded-[2.5rem] relative z-10 w-full max-w-sm shadow-2xl border border-amber-100 animate-zoom-in">
               <h2 className="text-center font-black mb-8 text-amber-900 text-xl tracking-widest uppercase">ASA ACCESS</h2>
               <div className="relative mb-6">
                  <input type={showPassword?'text':'password'} placeholder="通行密碼" value={passwordInput} onChange={(e)=>setPasswordInput(e.target.value)} className="w-full border-2 border-amber-50 rounded-[1.8rem] p-6 text-center text-xl font-black outline-none focus:border-amber-800 transition-all pr-14 shadow-inner" autoFocus />
@@ -277,12 +282,12 @@ export default function CafeSystem() {
     );
   }
 
-  // --- 後台與主控系統：根據需求精密調整比例與字體 ---
+  // --- 主控系統與報表：精密微調比例 ---
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
        <header className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/95 sticky top-0 z-50">
-          <h1 className="font-black text-lg md:text-xl flex items-center gap-3 text-amber-500 uppercase tracking-widest"><ChefHat size={28} /> ASA 主控室</h1>
-          <button onClick={() => setSystemRole('customer')} className="text-[10px] bg-slate-800 px-6 py-2 rounded-xl font-black text-slate-400 border border-slate-700 hover:text-white transition-all uppercase tracking-widest">Logout</button>
+          <h1 className="font-black text-lg md:text-xl flex items-center gap-3 text-amber-500 uppercase tracking-widest"><ChefHat size={28} /> ASA {systemRole==='kitchen'?'後廚系統':'店長主控台'}</h1>
+          <button onClick={() => setSystemRole('customer')} className="text-[10px] bg-slate-800 px-6 py-2 rounded-xl font-black text-slate-400 border border-slate-700 hover:text-white transition-all uppercase">Logout</button>
        </header>
        <main className="p-6 flex-1 max-w-[1400px] mx-auto w-full overflow-y-auto">
           {systemRole === 'kitchen' ? (
@@ -302,36 +307,35 @@ export default function CafeSystem() {
                   <div key={order.id} className="w-85 bg-slate-800 rounded-[2.5rem] border-t-8 border-amber-500 shadow-2xl flex flex-col shrink-0 animate-fade-in hover:scale-105 transition-transform">
                     <div className="p-6 border-b border-slate-700 font-black flex justify-between items-center text-amber-50">
                       <div><div className="text-xl uppercase tracking-tighter">{order.table}</div><div className="text-[9px] text-slate-500 mt-1 font-mono uppercase">{order.time}</div></div>
-                      <span className="bg-slate-900 px-3 py-1 rounded-lg text-[9px] font-mono border border-slate-700 shadow-inner">#{order.id.slice(-4)}</span>
+                      <span className="bg-slate-900 px-3 py-1 rounded-lg text-[9px] font-mono border border-slate-700">#{order.id.slice(-4)}</span>
                     </div>
-                    <div className="p-8 flex-1 space-y-4 font-black">
-                       {order.items.map((it, idx) => <div key={idx} className="flex justify-between border-b border-slate-700/30 pb-2 text-sm text-amber-50"><span>{it.name}</span><span className="text-amber-400 bg-slate-900 px-2 rounded-lg">x {it.quantity}</span></div>)}
+                    <div className="p-8 flex-1 space-y-4 font-black text-amber-100">
+                       {order.items.map((it, idx) => <div key={idx} className="flex justify-between border-b border-slate-700/30 pb-2 text-sm"><span>{it.name}</span><span className="text-amber-400 bg-slate-900 px-2 rounded-lg">x {it.quantity}</span></div>)}
                     </div>
-                    <div className="p-6 bg-slate-900/30 rounded-b-[2.5rem] text-xs font-black text-slate-400 border-t border-slate-700 uppercase px-8 text-right">Subtotal: $ {order.total}</div>
-                    <div className="p-6 pt-0"><button onClick={async()=>await updateDoc(doc(db,'artifacts',appId,'public', 'data', 'orders', order.id),{status:'completed'})} className="w-full py-4 bg-amber-500 text-slate-900 font-black rounded-xl text-base shadow-xl active:scale-95 transition-all">出餐完成</button></div>
+                    <div className="p-6 bg-slate-900/30 rounded-b-[2.5rem]"><button onClick={async()=>await updateDoc(doc(db,'artifacts',appId,'public', 'data', 'orders', order.id),{status:'completed'})} className="w-full py-4 bg-amber-500 text-slate-900 font-black rounded-xl text-base shadow-xl active:scale-95 transition-all">出餐完成</button></div>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
             <div className="space-y-10 animate-fade-in">
-              {/* --- 修改：主控室分類切換文字加大 2pt --- */}
+              {/* --- 修改：主控室分類切換文字加大 2pt (由原本基礎 text-base 升級) --- */}
               <div className="flex gap-4 bg-slate-800 p-2.5 rounded-2xl w-fit border border-slate-700 shadow-xl">
-                <button onClick={()=>setAdminTab('reports')} className={`px-10 py-3 rounded-xl text-base font-black transition-all ${adminTab==='reports'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>銷售報表分析 (REPORTS)</button>
-                <button onClick={()=>setAdminTab('products')} className={`px-10 py-3 rounded-xl text-base font-black transition-all ${adminTab==='products'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>商品管理 (STOCK)</button>
+                <button onClick={()=>setAdminTab('reports')} className={`px-10 py-3 rounded-xl text-lg font-black transition-all ${adminTab==='reports'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>銷售報表分析 (ANALYTICS)</button>
+                <button onClick={()=>setAdminTab('products')} className={`px-10 py-3 rounded-xl text-lg font-black transition-all ${adminTab==='products'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>商品管理 (STOCK)</button>
               </div>
 
               {adminTab === 'reports' ? (
                 <div className="space-y-10">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* --- 修改：外框縮小 (p-12 -> p-8, h-64 -> h-52), 標籤字體加大, 數字適當縮小 (text-7xl -> text-5xl) --- */}
-                    <div className="bg-gradient-to-br from-blue-600 to-indigo-900 p-8 rounded-[3rem] shadow-2xl flex flex-col justify-between h-52 border-4 border-blue-500/20">
-                       <span className="font-black text-blue-100 uppercase tracking-widest text-sm">當日雲端累計總額</span>
-                       <h3 className="text-5xl font-black text-white tracking-tighter">$ {orders.reduce((s,o)=>s+o.total, 0).toLocaleString()}</h3>
+                    {/* --- 修改：外框縮小 (h-52 -> h-44, p-8 -> p-5), 標籤字體加大, 金額數字調小 --- */}
+                    <div className="bg-gradient-to-br from-blue-600 to-indigo-900 p-5 rounded-[2.5rem] shadow-2xl flex flex-col justify-between h-44 border-4 border-blue-500/20">
+                       <span className="font-black text-blue-100 uppercase tracking-widest text-base">當日雲端累計總額</span>
+                       <h3 className="text-4xl font-black text-white tracking-tighter">$ {orders.reduce((s,o)=>s+o.total, 0).toLocaleString()}</h3>
                     </div>
-                    <div className="bg-slate-800 p-8 rounded-[3rem] border-4 border-slate-700 flex flex-col justify-between h-52 shadow-xl">
-                       <span className="font-black text-slate-500 uppercase tracking-widest text-sm">總結帳單數統計</span>
-                       <h3 className="text-5xl font-black text-amber-500 tracking-tighter">{orders.length} <span className="text-lg text-slate-600 uppercase">單</span></h3>
+                    <div className="bg-slate-800 p-5 rounded-[2.5rem] border-4 border-slate-700 flex flex-col justify-between h-44 shadow-xl">
+                       <span className="font-black text-slate-500 uppercase tracking-widest text-base">總結帳單數統計</span>
+                       <h3 className="text-4xl font-black text-amber-500 tracking-tighter">{orders.length} <span className="text-sm text-slate-600 uppercase">單</span></h3>
                     </div>
                   </div>
 
@@ -339,8 +343,8 @@ export default function CafeSystem() {
                      <h2 className="text-2xl font-black mb-10 text-blue-400 flex items-center gap-3 uppercase tracking-widest"><BarChart3 size={32} /> 銷售細目報表</h2>
                      <table className="w-full text-left font-black">
                         <thead>
-                           {/* --- 修改：表頭文字加大 2pt (text-[11px] -> text-sm) --- */}
-                           <tr className="text-slate-500 border-b border-slate-700 text-sm uppercase tracking-widest">
+                           {/* --- 修改：表頭文字項目加大 2pt (ITEM, QTY, TOTAL) --- */}
+                           <tr className="text-slate-500 border-b border-slate-700 text-base uppercase tracking-widest">
                               <th className="pb-6 px-4">商品名稱 (ITEM)</th>
                               <th className="pb-6 px-4 text-center">總銷量 (QTY)</th>
                               <th className="pb-6 px-4 text-right">合計金額 (TOTAL)</th>
@@ -348,7 +352,7 @@ export default function CafeSystem() {
                         </thead>
                         <tbody>
                            {salesDetail.map((s,i)=>(
-                             <tr key={i} className="border-b border-slate-700/30 text-lg hover:bg-slate-700/40 transition-colors">
+                             <tr key={i} className="border-b border-slate-700/30 text-xl hover:bg-slate-700/40 transition-colors">
                                <td className="py-6 px-4">{s.name}</td>
                                <td className="py-6 px-4 text-center text-amber-500">{s.qty} 份</td>
                                <td className="py-6 px-4 text-right text-blue-400">$ {s.subtotal.toLocaleString()}</td>
@@ -360,24 +364,23 @@ export default function CafeSystem() {
                 </div>
               ) : (
                 <div className="space-y-8">
-                  {/* 商品管理模塊 */}
                   <div className="bg-slate-800 p-12 rounded-[4rem] border border-slate-700 shadow-2xl">
                     <h2 className="text-2xl font-black mb-10 flex items-center gap-3 text-blue-400 uppercase tracking-widest"><PackagePlus size={36} /> 新增 ASA 商品上架</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                      <select value={newItem.categoryId} onChange={e=>setNewItem({...newItem, categoryId: e.target.value})} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner shadow-black/50">{menuData.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-                      <input type="text" placeholder="品名" value={newItem.name} onChange={e=>{const n=e.target.value; setNewItem({...newItem, name:n, poetry:generatePoetry(n)});}} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner shadow-black/50" />
-                      <input type="number" placeholder="單價" value={newItem.price} onChange={e=>setNewItem({...newItem, price:e.target.value})} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner shadow-black/50" />
-                      <input type="text" placeholder="自動詩詞描述" value={newItem.poetry} onChange={e=>setNewItem({...newItem, poetry:e.target.value})} className="col-span-full bg-slate-900 p-6 rounded-3xl border border-blue-900/50 italic text-blue-200 text-lg shadow-inner font-serif" />
-                      <input type="text" placeholder="照片 URL" value={newItem.image} onChange={e=>setNewItem({...newItem, image:e.target.value})} className="col-span-full bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner shadow-black/50" />
-                      <button onClick={async()=>{ const cat = menuData.find(c=>c.id===newItem.categoryId); const it = { ...newItem, id: `m_${Date.now()}`, price: parseInt(newItem.price), stock: parseInt(newItem.stock) }; await updateDoc(doc(db,'artifacts',appId,'public','data','menu',newItem.categoryId), { items: [...cat.items, it] }); alert('上架成功！'); setNewItem({...newItem, name:'', price:'', poetry:'', image:''}); }} className="col-span-full bg-blue-600 py-8 rounded-[3rem] font-black shadow-2xl active:scale-95 transition-all text-2xl mt-6 uppercase tracking-widest">發佈新品 (PUBLISH)</button>
+                      <select value={newItem.categoryId} onChange={e=>setNewItem({...newItem, categoryId: e.target.value})} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner">{menuData.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+                      <input type="text" placeholder="品名" value={newItem.name} onChange={e=>{const n=e.target.value; setNewItem({...newItem, name:n, poetry:generatePoetry(n)});}} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner" />
+                      <input type="number" placeholder="單價" value={newItem.price} onChange={e=>setNewItem({...newItem, price:e.target.value})} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner" />
+                      <input type="text" placeholder="自動詩詞" value={newItem.poetry} onChange={e=>setNewItem({...newItem, poetry:e.target.value})} className="col-span-full bg-slate-900 p-6 rounded-3xl border border-blue-900/50 italic text-blue-200 text-lg shadow-inner font-serif" />
+                      <input type="text" placeholder="照片網址" value={newItem.image} onChange={e=>setNewItem({...newItem, image:e.target.value})} className="col-span-full bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner" />
+                      <button onClick={async()=>{ const cat = menuData.find(c=>c.id===newItem.categoryId); const it = { ...newItem, id: `m_${Date.now()}`, price: parseInt(newItem.price), stock: parseInt(newItem.stock) }; await updateDoc(doc(db,'artifacts',appId,'public','data','menu',newItem.categoryId), { items: [...cat.items, it] }); alert('上架成功！'); setNewItem({...newItem, name:'', price:'', poetry:'', image:''}); }} className="col-span-full bg-blue-600 py-8 rounded-[3rem] font-black shadow-2xl active:scale-95 transition-all text-2xl mt-6 uppercase tracking-widest tracking-widest tracking-widest">正式發佈商品 (PUBLISH)</button>
                     </div>
                   </div>
                   <div className="bg-slate-800 p-10 rounded-[3rem] border border-slate-700 shadow-xl">
-                    <h2 className="text-2xl font-black mb-10 text-slate-300 uppercase tracking-widest"><ClipboardList size={32} /> 商品狀態管理</h2>
+                    <h2 className="text-2xl font-black mb-10 text-slate-300 uppercase tracking-widest"><ClipboardList size={32} /> 商品管理監看</h2>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                        {menuData.map(c => c.items.map(i => (
                         <div key={i.id} className="bg-slate-900 p-6 rounded-[2.5rem] flex justify-between items-center group border border-slate-700 hover:border-red-500 transition-all shadow-xl">
-                          <div className="flex items-center gap-5"><img src={i.image} className="w-16 h-16 rounded-full object-cover shadow-lg" /><div><div className="font-black text-base">{i.name}</div><div className="text-[11px] text-slate-500 font-bold">$ {i.price}</div></div></div>
+                          <div className="flex items-center gap-5"><img src={i.image} className="w-16 h-16 rounded-full object-cover shadow-lg" /><div><div className="font-black text-base text-white">{i.name}</div><div className="text-[11px] text-slate-500 font-bold">$ {i.price}</div></div></div>
                           <button onClick={async()=>{if(confirm(`確定要下架【${i.name}】嗎？`)){ const u = c.items.filter(x=>x.id!==i.id); await updateDoc(doc(db,'artifacts',appId,'public','data','menu',c.id),{items:u}); }}} className="p-4 text-slate-700 hover:text-red-500 transition-all"><Trash2 size={24} /></button>
                         </div>
                       )))}
