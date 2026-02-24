@@ -92,8 +92,8 @@ export default function CafeSystem() {
   const salesDetail = useMemo(() => {
     const detail = {};
     orders.forEach(o => { o.items.forEach(i => {
-        if (!detail[i.id]) detail[i.id] = { name: i.name, qty: 0, subtotal: 0 };
-        detail[i.id].qty += i.quantity; detail[i.id].subtotal += (i.price * i.quantity);
+      if (!detail[i.id]) detail[i.id] = { name: i.name, qty: 0, subtotal: 0 };
+      detail[i.id].qty += i.quantity; detail[i.id].subtotal += (i.price * i.quantity);
     });});
     return Object.values(detail);
   }, [orders]);
@@ -118,7 +118,6 @@ export default function CafeSystem() {
     if (cart.length === 0) return alert('購物車是空的喔！');
     if (orderType === 'dineIn' && !tableNumber) return alert('請輸入桌號');
     if (orderType === 'takeout' && phoneSuffix.length !== 3) return alert('請輸入手機末三碼');
-
     try {
       for (const item of cart) {
         if (item.stock !== undefined) {
@@ -129,10 +128,10 @@ export default function CafeSystem() {
       }
       const ts = Date.now();
       const orderId = `ASA-${ts.toString().slice(-4)}`;
-      const newOrder = { id: orderId, table: orderType==='takeout'?`外帶-${phoneSuffix}`:`桌號 ${tableNumber}`, items: cart, total: cart.reduce((s,i)=>s+(i.price*i.quantity),0), status: 'pending', time: new Date().toLocaleTimeString(), timestamp: ts };
+      const newOrder = { id: orderId, table: orderType==='takeout'?`外帶-${phoneSuffix}`:`桌號 ${tableNumber}`, items: cart, total: cart.reduce((s,i)=>s+(i.price*i.quantity),0), status: 'pending', date: new Date().toLocaleDateString('zh-TW'), time: new Date().toLocaleTimeString('zh-TW'), timestamp: ts };
       await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'orders', orderId), newOrder);
       setLastOrder(newOrder); setOrderStatus('success'); setIsCartOpen(false);
-    } catch (e) { alert('系統連線繁忙，請重試'); }
+    } catch (e) { alert('系統忙碌中，請重試'); }
   };
 
   // --- 啟動畫面還原：ASA 南巷微光品味中......... ---
@@ -160,12 +159,11 @@ export default function CafeSystem() {
         <header className="bg-white/80 backdrop-blur-md sticky top-0 z-[100] border-b border-amber-100 px-6 py-4">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
             <div className="flex items-center gap-3">
-              {/* --- Logo 實裝：使用 Postimg 連結 --- */}
               <img src="https://i.postimg.cc/1tTJBrLd/Gemini-Generated-Image-7uf38w7uf38w7uf3.png" className="w-12 h-12 rounded-full object-cover shadow-xl border-2 border-amber-900/10" alt="ASA Logo" />
               <h1 className="text-xl md:text-2xl font-black font-serif">ASA 南巷微光</h1>
             </div>
             <div className="flex items-center gap-4">
-               <button onClick={()=>setSearchResult('searching')} className="p-3 text-amber-400 hover:text-amber-800 flex items-center gap-2 text-[12px] font-black bg-amber-50 rounded-2xl transition-all"><Search size={16}/> 查進度</button>
+               <button onClick={()=>setSearchResult('searching')} className="p-3 text-amber-400 hover:text-amber-800 flex items-center gap-2 text-[12px] font-black bg-amber-50 rounded-2xl transition-all shadow-sm"><Search size={16}/> 查進度</button>
                <button onClick={()=>{setPasswordInput(''); setShowLoginModal(true);}} className="p-3 bg-amber-800 text-white rounded-2xl shadow-lg active:scale-90 flex items-center justify-center transition-all"><Lock size={20}/></button>
             </div>
           </div>
@@ -178,7 +176,7 @@ export default function CafeSystem() {
                <div className="flex justify-between items-center mb-6"><h3 className="font-black text-lg tracking-widest uppercase text-amber-900">訂單狀態</h3><X onClick={()=>setSearchResult(null)} className="cursor-pointer text-slate-300" /></div>
                <div className="flex gap-2 mb-6"><input type="text" placeholder="末四碼" value={searchId} onChange={e=>setSearchId(e.target.value)} className="flex-1 bg-amber-50 p-4 rounded-xl outline-none font-bold text-sm shadow-inner" /><button onClick={()=>{const f=orders.find(o=>o.id.includes(searchId)); setSearchResult(f||'none')}} className="bg-amber-800 text-white px-6 rounded-xl active:scale-90 shadow-lg"><Search size={18}/></button></div>
                {searchResult && searchResult !== 'searching' && searchResult !== 'none' && (
-                 <div className="bg-amber-50 p-6 rounded-2xl border border-amber-200"><div className="flex justify-between items-center mb-4"><span className="font-black text-xs">{searchResult.id}</span><span className={`px-4 py-1 rounded-full text-[10px] font-black ${searchResult.status==='pending'?'bg-amber-200 text-amber-800 animate-pulse':'bg-green-600 text-white'}`}>{searchResult.status==='pending'?'製作中':'已完成'}</span></div></div>
+                 <div className="bg-amber-50 p-6 rounded-2xl border border-amber-200"><div className="flex justify-between items-center mb-4"><span className="font-black text-xs text-amber-900">{searchResult.id}</span><span className={`px-4 py-1 rounded-full text-[10px] font-black ${searchResult.status==='pending'?'bg-amber-200 text-amber-800 animate-pulse':'bg-green-600 text-white'}`}>{searchResult.status==='pending'?'製作中':'已完成'}</span></div></div>
                )}
             </div>
           </div>
@@ -203,11 +201,10 @@ export default function CafeSystem() {
                 <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-amber-50 mb-4 shadow-md" onClick={() => setZoomImage(item.image)}><img src={item.image} className="w-full h-full object-cover" /></div>
                 <div className="mb-4 w-full flex items-center justify-center gap-3">
                   <span className="text-xl font-black text-amber-900 font-serif">${item.price}</span>
-                  <button onClick={() => addToCart(item)} disabled={left===0} className={`px-4 py-1.5 rounded-full font-black text-[10px] shadow-sm active:scale-90 ${left===0?'bg-amber-100 text-amber-300':'bg-amber-800 text-white hover:bg-amber-900'}`}>{left===0?'完售':'加入'}</button>
+                  <button onClick={() => addToCart(item)} disabled={left===0} className={`px-4 py-1.5 rounded-full font-black text-[10px] shadow-sm active:scale-90 ${left===0?'bg-amber-100 text-amber-300':'bg-amber-800 text-white'}`}>{left===0?'完售':'加入'}</button>
                 </div>
                 <h3 className="text-base font-black tracking-tight">{isHot && <span className="text-orange-500 mr-1 animate-bounce">🔥</span>}{item.name}</h3>
                 <p className="text-[9px] text-amber-700/50 italic mt-2 border-t border-amber-50 pt-2 h-7 leading-relaxed">{item.poetry}</p>
-                {/* 庫存顯示：加大紅色 */}
                 {left !== null && <div className={`text-sm font-black mt-2 ${left > 0 ? 'text-red-600' : 'text-slate-400'}`}>今日供應餘額：{left}</div>}
               </div>
             );
@@ -222,11 +219,11 @@ export default function CafeSystem() {
         </div>
 
         {isCartOpen && (
-          <div className="fixed inset-0 z-[200] flex flex-col justify-end lg:hidden">
+          <div className="fixed inset-0 z-200 flex flex-col justify-end lg:hidden">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsCartOpen(false)}></div>
             <div className="bg-white w-full rounded-t-[2.5rem] relative p-8 shadow-2xl animate-slide-up max-h-[80vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6"><h2 className="text-xl font-black uppercase text-amber-900 tracking-widest">點餐明細</h2><X onClick={()=>setIsCartOpen(false)} size={24} className="text-amber-200" /></div>
-              <div className="bg-amber-50 p-5 rounded-2xl space-y-4 mb-6 border border-amber-100 shadow-inner">
+              <div className="flex justify-between items-center mb-6"><h2 className="text-lg font-black uppercase text-amber-900 tracking-widest text-center">ORDER DETAILS</h2><X onClick={()=>setIsCartOpen(false)} size={24} className="text-amber-200" /></div>
+              <div className="bg-amber-50 p-5 rounded-2xl space-y-4 mb-6 border border-amber-100 shadow-inner text-center">
                 <div className="flex gap-2 bg-white p-1 rounded-xl shadow-inner"><button onClick={()=>setOrderType('dineIn')} className={`flex-1 py-2 text-sm font-black rounded-lg transition-all ${orderType==='dineIn'?'bg-amber-800 text-white shadow-md':'text-amber-300'}`}>內用</button><button onClick={()=>setOrderType('takeout')} className={`flex-1 py-2 text-sm font-black rounded-lg transition-all ${orderType==='takeout'?'bg-amber-800 text-white shadow-md':'text-amber-300'}`}>外帶</button></div>
                 <input type="text" placeholder={orderType==='dineIn'?'請輸入您的桌號':'手機末三碼'} value={orderType==='dineIn'?tableNumber:phoneSuffix} onChange={e=>orderType==='dineIn'?setTableNumber(e.target.value):setPhoneSuffix(e.target.value)} className="w-full bg-white rounded-xl p-3 text-xl font-black shadow-sm outline-none text-center placeholder-amber-200" />
               </div>
@@ -242,6 +239,7 @@ export default function CafeSystem() {
           </div>
         )}
 
+        {/* 電腦版側邊欄：回歸 5.0 比例 */}
         <aside className="hidden lg:flex w-[380px] bg-white border-l border-amber-100 fixed right-0 top-0 bottom-0 flex-col shadow-2xl z-[50]">
           <div className="p-8 border-b border-amber-50 bg-[#FDFBF7] font-serif text-2xl font-black text-amber-900 text-center uppercase tracking-widest">ASA CART</div>
           <div className="flex-1 overflow-y-auto p-8 space-y-8">
@@ -253,14 +251,14 @@ export default function CafeSystem() {
               {cart.map((i,idx) => (
                 <div key={idx} className="flex justify-between items-center font-bold text-sm bg-white p-5 rounded-2xl border border-amber-50 shadow-sm transition-all hover:shadow-md">
                   <div className="flex-1"><div>{i.name}</div><div className="text-[10px] text-amber-500 font-black mt-1">$ {i.price}</div></div>
-                  <div className="flex items-center gap-4 bg-amber-50 px-3 py-1.5 rounded-full"><Minus size={14} className="cursor-pointer text-amber-800" onClick={()=>setCart(prev=>prev.map(x=>x.id===i.id?{...x,quantity:Math.max(0,x.quantity-1)}:x).filter(x=>x.quantity>0))} /><span className="font-black text-base">{i.quantity}</span><Plus size={14} className="cursor-pointer text-amber-800" onClick={()=>addToCart(i)} /></div>
+                  <div className="flex items-center gap-4 bg-amber-50 px-3 py-1.5 rounded-full"><Minus size={14} className="cursor-pointer text-amber-800" onClick={()=>setCart(prev=>prev.map(x=>x.id===i.id?{...x,quantity:Math.max(0,x.quantity-1)}:x).filter(x=>x.quantity>0))} /><span className="font-black text-base text-amber-900">{i.quantity}</span><Plus size={14} className="cursor-pointer text-amber-800" onClick={()=>addToCart(i)} /></div>
                 </div>
               ))}
             </div>
           </div>
           <div className="p-8 bg-[#FDFBF7] border-t border-amber-100 font-black text-amber-900">
             <div className="flex justify-between items-end mb-6 text-3xl font-serif font-black"><span className="text-[11px] font-black text-amber-400 uppercase tracking-widest mb-1">TOTAL</span><span>$ {cart.reduce((s,i)=>s+(i.price*i.quantity),0)}</span></div>
-            <button disabled={cart.length===0} onClick={handleSubmitOrder} className="w-full py-5 bg-amber-800 text-white rounded-2xl font-black text-base shadow-xl active:scale-95 transition-all">正式送出訂單</button>
+            <button onClick={handleSubmitOrder} className="w-full py-5 bg-amber-800 text-white rounded-2xl font-black text-sm shadow-xl active:scale-95 transition-all">正式送出訂單</button>
           </div>
         </aside>
 
@@ -281,10 +279,10 @@ export default function CafeSystem() {
     );
   }
 
-  // --- 後廚系統 & 店長後台 (功能全開穩定) ---
+  // --- 後台與後廚系統：電腦版比例縮小優化 ---
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
-       <header className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/95 sticky top-0 z-50 shadow-2xl">
+       <header className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/95 sticky top-0 z-50">
           <h1 className="font-black text-lg flex items-center gap-3 text-amber-500 uppercase tracking-widest"><ChefHat size={24} /> ASA 主控室</h1>
           <button onClick={() => setSystemRole('customer')} className="text-[10px] bg-slate-800 px-6 py-2 rounded-xl font-black text-slate-400 border border-slate-700 hover:text-white transition-all uppercase tracking-widest">Logout</button>
        </header>
@@ -294,11 +292,11 @@ export default function CafeSystem() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-6 bg-slate-800/80 rounded-3xl border border-amber-500/20 shadow-2xl backdrop-blur-md">
                    <h2 className="text-amber-500 font-black mb-6 flex items-center gap-3 text-lg uppercase tracking-widest"><TrendingUp size={24} /> 今日排行 (HOT 5)</h2>
-                   <div className="space-y-3">{hotItems.map((h, i) => (<div key={i} className="bg-slate-900 p-4 rounded-xl border-l-4 border-amber-500 flex justify-between items-center shadow-lg"><span className="font-black text-sm">#{i+1} {h.name}</span><span className="text-amber-400 font-black text-xl">{h.count} 份</span></div>))}</div>
+                   <div className="space-y-3">{hotItems.map((h, i) => (<div key={i} className="bg-slate-900 p-4 rounded-xl border-l-4 border-amber-50 flex justify-between items-center shadow-lg"><span className="font-black text-sm">#{i+1} {h.name}</span><span className="text-amber-400 font-black text-xl">{h.count} 份</span></div>))}</div>
                 </div>
                 <div className="p-6 bg-slate-800/80 rounded-3xl border border-amber-500/20 shadow-2xl backdrop-blur-md">
-                   <h2 className="text-amber-500 font-black mb-6 flex items-center gap-3 text-lg uppercase tracking-widest"><PackagePlus size={24} /> 甜點今日庫存管理</h2>
-                   <div className="space-y-3">{menuData.find(c=>c.id==='c3')?.items.map(i => (<div key={i.id} className="flex justify-between items-center bg-slate-700 p-4 rounded-2xl border border-slate-600"><span className="font-black text-sm">{i.name}</span><input type="number" value={i.stock} onChange={async(e)=>{ const u = menuData.find(c=>c.id==='c3').items.map(it=>it.id===i.id?{...it,stock:parseInt(e.target.value)}:it); await updateDoc(doc(db,'artifacts',appId,'public','data','menu','c3'),{items:u}); }} className="w-20 bg-slate-900 text-amber-400 rounded-xl p-2 text-center font-black text-lg border-none shadow-inner" /></div>))}</div>
+                   <h2 className="text-amber-500 font-black mb-6 flex items-center gap-3 text-lg uppercase tracking-widest"><PackagePlus size={24} /> 庫存管理</h2>
+                   <div className="space-y-3">{menuData.find(c=>c.id==='c3')?.items.map(i => (<div key={i.id} className="flex justify-between items-center bg-slate-700 p-4 rounded-2xl border border-slate-600"><span className="font-black text-sm">{i.name}</span><input type="number" value={i.stock} onChange={async(e)=>{ const u = menuData.find(c=>c.id==='c3').items.map(it=>it.id===i.id?{...it,stock:parseInt(e.target.value)}:it); await updateDoc(doc(db,'artifacts',appId,'public','data','menu','c3'),{items:u}); }} className="w-20 bg-slate-900 text-amber-400 rounded-xl p-2 text-center font-black text-lg border-none" /></div>))}</div>
                 </div>
               </div>
               <div className="flex gap-6 overflow-x-auto pb-10 no-scrollbar">
@@ -306,12 +304,12 @@ export default function CafeSystem() {
                   <div key={order.id} className="w-85 bg-slate-800 rounded-[2.5rem] border-t-8 border-amber-500 shadow-2xl flex flex-col shrink-0 animate-fade-in hover:scale-105 transition-transform">
                     <div className="p-6 border-b border-slate-700 font-black flex justify-between items-center text-amber-50">
                       <div><div className="text-xl uppercase tracking-tighter">{order.table}</div><div className="text-[9px] text-slate-500 mt-1 font-mono uppercase">{order.time}</div></div>
-                      <span className="bg-slate-900 px-3 py-1 rounded-lg text-[9px] font-mono border border-slate-700">#{order.id.slice(-4)}</span>
+                      <span className="bg-slate-900 px-3 py-1 rounded-lg text-[9px] font-mono border border-slate-700 shadow-inner">#{order.id.slice(-4)}</span>
                     </div>
                     <div className="p-8 flex-1 space-y-4 font-black">
                        {order.items.map((it, idx) => <div key={idx} className="flex justify-between border-b border-slate-700/30 pb-2 text-sm text-amber-50"><span>{it.name}</span><span className="text-amber-400 bg-slate-900 px-2 rounded-lg">x {it.quantity}</span></div>)}
                     </div>
-                    <div className="p-6 bg-slate-900/30 rounded-b-[2.5rem] text-xs font-black text-slate-400 border-t border-slate-700 uppercase px-8">Subtotal: $ {order.total}</div>
+                    <div className="p-6 bg-slate-900/30 rounded-b-[2.5rem] text-xs font-black text-slate-400 border-t border-slate-700 uppercase px-8 text-right">Subtotal: $ {order.total}</div>
                     <div className="p-6 pt-0"><button onClick={async()=>await updateDoc(doc(db,'artifacts',appId,'public', 'data', 'orders', order.id),{status:'completed'})} className="w-full py-4 bg-amber-500 text-slate-900 font-black rounded-xl text-base shadow-xl active:scale-95 transition-all">出餐完成</button></div>
                   </div>
                 ))}
@@ -321,7 +319,7 @@ export default function CafeSystem() {
             <div className="space-y-10 animate-fade-in">
               <div className="flex gap-4 bg-slate-800 p-2.5 rounded-2xl w-fit border border-slate-700 shadow-xl">
                 <button onClick={()=>setAdminTab('reports')} className={`px-10 py-3 rounded-xl text-[12px] font-black transition-all ${adminTab==='reports'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>銷售報表分析</button>
-                <button onClick={()=>setAdminTab('products')} className={`px-10 py-3 rounded-xl text-[12px] font-black transition-all ${adminTab==='products'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>商品上下架管理</button>
+                <button onClick={()=>setAdminTab('products')} className={`px-10 py-3 rounded-xl text-[12px] font-black transition-all ${adminTab==='products'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>商品管理</button>
               </div>
               {adminTab === 'reports' ? (
                 <div className="space-y-10">
@@ -335,27 +333,25 @@ export default function CafeSystem() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-10">
-                  {/* 商品管理模塊回歸 */}
+                <div className="space-y-8">
                   <div className="bg-slate-800 p-12 rounded-[4rem] border border-slate-700 shadow-2xl">
-                    <h2 className="text-2xl font-black mb-10 flex items-center gap-3 text-blue-400 uppercase tracking-widest"><PackagePlus size={36} /> 新增 ASA 商品上架</h2>
+                    <h2 className="text-2xl font-black mb-10 text-blue-400 uppercase tracking-widest"><PackagePlus size={36} /> 新增 ASA 商品上架</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                      <select value={newItem.categoryId} onChange={e=>setNewItem({...newItem, categoryId: e.target.value})} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner">{menuData.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+                      <select value={newItem.categoryId} onChange={e=>setNewItem({...newItem, categoryId: e.target.value})} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner shadow-black/50">{menuData.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
                       <input type="text" placeholder="品名" value={newItem.name} onChange={e=>{const n=e.target.value; setNewItem({...newItem, name:n, poetry:generatePoetry(n)});}} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner shadow-black/50" />
                       <input type="number" placeholder="單價" value={newItem.price} onChange={e=>setNewItem({...newItem, price:e.target.value})} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner shadow-black/50" />
                       <input type="text" placeholder="自動詩詞描述" value={newItem.poetry} onChange={e=>setNewItem({...newItem, poetry:e.target.value})} className="col-span-full bg-slate-900 p-6 rounded-3xl border border-blue-900/50 italic text-blue-200 text-lg shadow-inner font-serif" />
                       <input type="text" placeholder="照片 URL" value={newItem.image} onChange={e=>setNewItem({...newItem, image:e.target.value})} className="col-span-full bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner shadow-black/50" />
-                      <button onClick={async()=>{ const cat = menuData.find(c=>c.id===newItem.categoryId); const it = { ...newItem, id: `m_${Date.now()}`, price: parseInt(newItem.price), stock: parseInt(newItem.stock) }; await updateDoc(doc(db,'artifacts',appId,'public','data','menu',newItem.categoryId), { items: [...cat.items, it] }); alert('上架成功！'); setNewItem({...newItem, name:'', price:'', poetry:'', image:''}); }} className="col-span-full bg-blue-600 py-8 rounded-[3rem] font-black shadow-2xl active:scale-95 transition-all text-2xl mt-6 uppercase tracking-widest">發佈新品 (PUBLISH)</button>
+                      <button onClick={async()=>{ const cat = menuData.find(c=>c.id===newItem.categoryId); const it = { ...newItem, id: `m_${Date.now()}`, price: parseInt(newItem.price), stock: parseInt(newItem.stock) }; await updateDoc(doc(db,'artifacts',appId,'public','data','menu',newItem.categoryId), { items: [...cat.items, it] }); alert('上架成功！'); setNewItem({...newItem, name:'', price:'', poetry:'', image:''}); }} className="col-span-full bg-blue-600 py-7 rounded-[2.5rem] font-black shadow-2xl active:scale-95 transition-all text-2xl mt-6 uppercase tracking-widest">發佈新品 (PUBLISH)</button>
                     </div>
                   </div>
-                  {/* 已上架清單：補齊垃圾桶 */}
                   <div className="bg-slate-800 p-10 rounded-[3rem] border border-slate-700 shadow-xl">
                     <h2 className="text-2xl font-black mb-10 text-slate-300 uppercase tracking-widest"><ClipboardList size={32} /> 商品狀態管理</h2>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                        {menuData.map(c => c.items.map(i => (
                         <div key={i.id} className="bg-slate-900 p-6 rounded-[2.5rem] flex justify-between items-center group border border-slate-700 hover:border-red-500 transition-all shadow-xl">
                           <div className="flex items-center gap-5"><img src={i.image} className="w-16 h-16 rounded-full object-cover shadow-lg" /><div><div className="font-black text-base">{i.name}</div><div className="text-[11px] text-slate-500 font-bold">$ {i.price}</div></div></div>
-                          <button onClick={async()=>{if(confirm(`確定要將【${i.name}】下架嗎？`)){ const u = c.items.filter(x=>x.id!==i.id); await updateDoc(doc(db,'artifacts',appId,'public','data','menu',c.id),{items:u}); }}} className="p-4 text-slate-700 hover:text-red-500 transition-all"><Trash2 size={24} /></button>
+                          <button onClick={async()=>{if(confirm(`確定要下架【${i.name}】嗎？`)){ const u = c.items.filter(x=>x.id!==i.id); await updateDoc(doc(db,'artifacts',appId,'public','data','menu',c.id),{items:u}); }}} className="p-4 text-slate-700 hover:text-red-500 transition-all"><Trash2 size={24} /></button>
                         </div>
                       )))}
                    </div>
