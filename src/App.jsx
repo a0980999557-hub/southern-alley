@@ -158,7 +158,7 @@ export default function CafeSystem() {
         <header className="bg-white/80 backdrop-blur-md sticky top-0 z-[100] border-b border-amber-100 px-6 py-4 shadow-sm">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <img src="https://i.postimg.cc/1tTJBrLd/Gemini-Generated-Image-7uf38w7uf38w7uf3.png" className="w-12 h-12 rounded-full object-cover shadow-xl border-2 border-amber-900/10" alt="ASA Logo" />
+              <img src="https://i.postimg.cc/G2sP5yqd/Gemini-Generated-Image-7uf38w7uf38w7uf3.png" className="w-12 h-12 rounded-full object-cover shadow-xl border-2 border-amber-900/10" alt="ASA Logo" />
               <h1 className="text-xl md:text-2xl font-black font-serif tracking-tighter">ASA 南巷微光</h1>
             </div>
             <div className="flex items-center gap-4">
