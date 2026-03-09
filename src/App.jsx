@@ -80,18 +80,15 @@ export default function App() {
     const ordersRef = collection(db, 'artifacts', appId, 'public', 'data', 'orders');
     onSnapshot(ordersRef, (snap) => {
       const fetchedOrders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // 依照時間戳降序排列 (新的在前面)
       fetchedOrders.sort((a, b) => b.timestamp - a.timestamp);
       setOrders(fetchedOrders);
     });
   }, [user]);
 
-  // ================= 結算報表與排行邏輯 (依實際日期過濾) =================
   const { todayStats, monthStats } = useMemo(() => {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const endOfToday = startOfToday + 24 * 60 * 60 * 1000 - 1;
-    
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).getTime();
 
@@ -110,17 +107,13 @@ export default function App() {
       return {
         totalRev,
         orderCount: filteredOrders.length,
-        hot: list.sort((a,b) => b.count - a.count).slice(0, 5) // 取前 5 名
+        hot: list.sort((a,b) => b.count - a.count).slice(0, 5)
       };
     };
 
-    return {
-      todayStats: calcStats(todayOrders),
-      monthStats: calcStats(monthOrders)
-    };
+    return { todayStats: calcStats(todayOrders), monthStats: calcStats(monthOrders) };
   }, [orders, menuData]);
 
-  // 所有訂單商品明細 (用於總銷售細目報表)
   const salesDetail = useMemo(() => {
     const detail = {};
     orders.forEach(o => { o.items.forEach(i => {
@@ -146,6 +139,13 @@ export default function App() {
     });
   };
 
+  const updateQuantity = (id, delta) => {
+    setCart(prev => prev.map(item => {
+      if (item.id === id) return { ...item, quantity: Math.max(0, item.quantity + delta) };
+      return item;
+    }).filter(item => item.quantity > 0));
+  };
+
   const handleSubmitOrder = async () => {
     if (cart.length === 0) return alert('購物車是空的喔！');
     if (orderType === 'dineIn' && !tableNumber) return alert('請輸入桌號');
@@ -169,6 +169,9 @@ export default function App() {
   if (!isDataLoaded) return <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center font-black text-xl text-amber-900 tracking-widest italic animate-pulse">ASA 南巷微光品味中.........</div>;
 
   if (systemRole === 'customer') {
+    const cartTotalAmount = cart.reduce((s,i)=>s+(i.price*i.quantity),0);
+    const cartTotalItems = cart.reduce((s,i)=>s+i.quantity,0);
+
     if (orderStatus === 'success') {
       return (
         <div className="min-h-screen bg-[#FDFBF7] flex flex-col items-center justify-center p-6 text-amber-900">
@@ -223,33 +226,75 @@ export default function App() {
           </div>
         </div>
 
-        <main className="flex-1 max-w-7xl mx-auto px-4 py-10 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:mr-[380px]">
+        {/* --- 手機版商品卡片大美化 --- */}
+        <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:mr-[380px] pb-32">
           {menuData.find(c => c.id === activeCategory)?.items.map(item => {
+            const cartItem = cart.find(c => c.id === item.id);
+            const quantity = cartItem ? cartItem.quantity : 0;
             const left = getDisplayStock(item);
-            // 判斷是否為今日熱銷
             const isHot = todayStats.hot.some(h => h.name === item.name);
+            
             return (
-              <div key={item.id} className="bg-white rounded-[2rem] p-6 shadow-sm border border-amber-50 flex flex-col items-center text-center transition-all hover:shadow-lg">
-                <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-amber-50 mb-4 shadow-md" onClick={() => setZoomImage(item.image)}><img src={item.image} className="w-full h-full object-cover" /></div>
-                <div className="mb-4 w-full flex items-center justify-center gap-3">
-                  <span className="text-xl font-black text-amber-900 font-serif">${item.price}</span>
-                  <button onClick={() => addToCart(item)} disabled={left===0} className={`px-4 py-1.5 rounded-full font-black text-[10px] shadow-sm active:scale-90 ${left===0?'bg-amber-100 text-amber-300':'bg-amber-800 text-white'}`}>{left===0?'完售':'加入'}</button>
+              <div key={item.id} className="bg-white rounded-[2rem] p-5 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-amber-50 flex flex-col items-center text-center transition-all relative group">
+                
+                {/* 1. 圖片縮小約兩倍 (w-20 h-20)，改為圓潤高質感設計 */}
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-amber-50 relative shrink-0 shadow-inner mb-4 border-4 border-white group-hover:border-amber-100 transition-colors" onClick={() => setZoomImage(item.image)}>
+                  <img src={item.image} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" alt={item.name} />
                 </div>
-                <h3 className="text-base font-black tracking-tight">{isHot && <span className="text-orange-500 mr-1 animate-bounce">🔥</span>}{item.name}</h3>
-                <p className="text-[9px] text-amber-700/50 italic mt-2 border-t border-amber-50 pt-2 h-7 leading-relaxed">{item.poetry}</p>
-                {left !== null && <div className={`text-sm font-black mt-2 ${left > 0 ? 'text-red-600' : 'text-slate-400'}`}>今日供應餘額：{left}</div>}
+                
+                <div className="flex-1 flex flex-col w-full">
+                  {/* 2. 文字放大 2pt 並置中 */}
+                  <div className="mb-3">
+                    <h3 className="text-xl font-black text-amber-950 leading-tight mb-2">
+                      {isHot && <span className="text-orange-500 mr-1 animate-bounce inline-block">🔥</span>}
+                      {item.name}
+                    </h3>
+                    <p className="text-xs text-amber-700/60 italic leading-relaxed px-2 line-clamp-2 h-8">{item.poetry}</p>
+                    {left !== null && <div className={`text-[10px] font-black mt-2 ${left > 0 ? 'text-red-600' : 'text-slate-400'}`}>限量餘額：{left}</div>}
+                  </div>
+                  
+                  {/* 3. 價格與明顯的滿版加入購物車按鈕 */}
+                  <div className="mt-auto flex flex-col gap-3 w-full">
+                    <span className="text-xl font-black text-amber-600 font-serif">${item.price}</span>
+                    
+                    {quantity === 0 ? (
+                      <button onClick={() => addToCart(item)} disabled={left===0} className={`w-full py-3.5 rounded-full flex items-center justify-center font-black transition-all gap-2 shadow-lg active:scale-95 ${left===0 ? 'bg-gray-200 text-gray-400' : 'bg-gradient-to-r from-amber-600 to-amber-800 text-white hover:from-amber-700 hover:to-amber-900 shadow-[0_4px_15px_rgba(146,64,14,0.3)]'}`}>
+                        <Plus size={20} /> {left===0 ? '本日完售' : '加入購物車'}
+                      </button>
+                    ) : (
+                      <div className="flex items-center justify-between w-full bg-amber-50/80 rounded-full p-1.5 border border-amber-100 shadow-inner">
+                        <button onClick={() => updateQuantity(item.id, -1)} className="bg-white text-amber-700 w-11 h-11 rounded-full flex items-center justify-center shadow-sm hover:bg-amber-100 transition-colors active:scale-90"><Minus size={20} /></button>
+                        <span className="font-black text-amber-950 text-lg w-10 text-center">{quantity}</span>
+                        <button onClick={() => updateQuantity(item.id, 1)} disabled={left===0} className={`w-11 h-11 rounded-full flex items-center justify-center shadow-md transition-colors active:scale-90 ${left===0 ? 'bg-gray-300 text-gray-500' : 'bg-amber-700 text-white hover:bg-amber-800'}`}><Plus size={20} /></button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             );
           })}
         </main>
 
-        <div className="lg:hidden fixed bottom-6 left-4 right-4 z-[150]">
-          <div className="bg-amber-900 rounded-2xl p-3 flex items-center justify-between shadow-2xl border border-amber-800 animate-slide-up">
-            <div className="flex items-center gap-3 pl-4 text-white"><ShoppingCart size={20} /> <div className="font-black text-lg">$ {cart.reduce((s,i)=>s+(i.price*i.quantity),0)}</div></div>
-            <button onClick={() => setIsCartOpen(true)} className="bg-white text-amber-900 px-8 py-2.5 rounded-xl font-black text-xs active:scale-95 shadow-md">點餐明細</button>
+        {/* 4. 手機版底部懸浮購物車 (置中短膠囊設計) */}
+        <div className="lg:hidden fixed bottom-6 left-0 right-0 flex justify-center z-[150] pb-safe pointer-events-none px-4">
+          <div className="bg-amber-950 rounded-full shadow-[0_15px_40px_rgba(0,0,0,0.4)] p-2 pr-3 flex items-center gap-4 sm:gap-6 border border-amber-900/50 backdrop-blur-xl pointer-events-auto animate-slide-up">
+            <div className="flex items-center">
+              <button onClick={() => setIsCartOpen(true)} className="relative p-3.5 bg-amber-900/80 rounded-full text-amber-400 ml-1 hover:bg-amber-800 transition-colors">
+                <ShoppingCart size={24} />
+                {cartTotalItems > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[12px] w-6 h-6 rounded-full flex items-center justify-center font-black border-2 border-amber-950 shadow-sm">{cartTotalItems}</span>}
+              </button>
+              <div className="flex flex-col items-start ml-3">
+                <span className="text-amber-400/70 text-[11px] font-black tracking-wider mb-0.5 whitespace-nowrap">購物車總計</span>
+                <span className="text-xl font-black text-white leading-none">${cartTotalAmount}</span>
+              </div>
+            </div>
+            <button disabled={cart.length === 0} onClick={() => setIsCartOpen(true)} className={`px-5 py-3 rounded-full font-black text-sm transition-all shadow-md whitespace-nowrap ${cart.length === 0 ? 'bg-amber-900 text-amber-700' : 'bg-gradient-to-r from-amber-500 to-amber-700 text-white shadow-[0_0_20px_rgba(245,158,11,0.4)] active:scale-95'}`}>
+              查看明細
+            </button>
           </div>
         </div>
 
+        {/* 手機版購物明細 Modal */}
         {isCartOpen && (
           <div className="fixed inset-0 z-[200] flex flex-col justify-end lg:hidden">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsCartOpen(false)}></div>
@@ -262,11 +307,11 @@ export default function App() {
               <div className="space-y-4 mb-8">
                 {cart.map(i => (
                   <div key={i.id} className="flex justify-between items-center font-bold text-base p-2 border-b border-amber-50"><span>{i.name}</span>
-                    <div className="flex items-center gap-4 bg-amber-50 px-3 py-1.5 rounded-full"><Minus size={18} className="text-amber-800 cursor-pointer" onClick={()=>setCart(prev=>prev.map(x=>x.id===i.id?{...x,quantity:Math.max(0,x.quantity-1)}:x).filter(x=>x.quantity>0))} /><span className="font-black text-xl min-w-[30px] text-center">{i.quantity}</span><Plus size={18} className="text-amber-800 cursor-pointer" onClick={()=>addToCart(i)} /></div>
+                    <div className="flex items-center gap-4 bg-amber-50 px-3 py-1.5 rounded-full"><Minus size={18} className="text-amber-800 cursor-pointer" onClick={()=>updateQuantity(i.id, -1)} /><span className="font-black text-xl min-w-[30px] text-center">{i.quantity}</span><Plus size={18} className="text-amber-800 cursor-pointer" onClick={()=>updateQuantity(i.id, 1)} /></div>
                   </div>
                 ))}
               </div>
-              <button onClick={handleSubmitOrder} className="w-full py-5 bg-amber-800 text-white rounded-2xl font-black text-lg active:scale-95 shadow-xl">確認送出訂單</button>
+              <button onClick={handleSubmitOrder} className="w-full py-5 bg-amber-800 text-white rounded-2xl font-black text-lg active:scale-95 shadow-xl">確認送出訂單 • ${cartTotalAmount}</button>
             </div>
           </div>
         )}
@@ -282,13 +327,13 @@ export default function App() {
               {cart.map((i,idx) => (
                 <div key={idx} className="flex justify-between items-center font-bold text-sm bg-white p-5 rounded-2xl border border-amber-50 shadow-sm transition-all hover:shadow-md text-amber-900">
                   <div className="flex-1"><div>{i.name}</div><div className="text-[10px] text-amber-500 font-black mt-1">$ {i.price}</div></div>
-                  <div className="flex items-center gap-4 bg-amber-50 px-3 py-1.5 rounded-full"><Minus size={14} className="cursor-pointer text-amber-800" onClick={()=>setCart(prev=>prev.map(x=>x.id===i.id?{...x,quantity:Math.max(0,x.quantity-1)}:x).filter(x=>x.quantity>0))} /><span className="font-black text-base">{i.quantity}</span><Plus size={14} className="cursor-pointer text-amber-800" onClick={()=>addToCart(i)} /></div>
+                  <div className="flex items-center gap-4 bg-amber-50 px-3 py-1.5 rounded-full"><Minus size={14} className="cursor-pointer text-amber-800" onClick={()=>updateQuantity(i.id, -1)} /><span className="font-black text-base">{i.quantity}</span><Plus size={14} className="cursor-pointer text-amber-800" onClick={()=>updateQuantity(i.id, 1)} /></div>
                 </div>
               ))}
             </div>
           </div>
           <div className="p-8 bg-[#FDFBF7] border-t border-amber-100 font-black text-amber-900">
-            <div className="flex justify-between items-end mb-6 text-3xl font-serif font-black"><span className="text-[11px] font-black text-amber-400 uppercase tracking-widest mb-1">TOTAL</span><span>$ {cart.reduce((s,i)=>s+(i.price*i.quantity),0)}</span></div>
+            <div className="flex justify-between items-end mb-6 text-3xl font-serif font-black"><span className="text-[11px] font-black text-amber-400 uppercase tracking-widest mb-1">TOTAL</span><span>$ {cartTotalAmount}</span></div>
             <button disabled={cart.length===0} onClick={handleSubmitOrder} className="w-full py-5 bg-amber-800 text-white rounded-2xl font-black text-sm shadow-xl active:scale-95 transition-all">正式送出訂單</button>
           </div>
         </aside>
@@ -325,10 +370,7 @@ export default function App() {
        <main className="p-6 flex-1 max-w-[1400px] mx-auto w-full overflow-y-auto">
           {systemRole === 'kitchen' ? (
             <div className="space-y-8 animate-fade-in">
-              {/* 改為三大儀表板並排 */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* 1. 今日排行 (HOT 5) */}
                 <div className="p-6 bg-slate-800/80 rounded-3xl border border-amber-500/20 shadow-2xl backdrop-blur-md flex flex-col">
                    <h2 className="text-amber-500 font-black mb-6 flex items-center gap-3 text-xl uppercase tracking-widest"><TrendingUp size={24} /> 今日排行 (HOT 5)</h2>
                    <div className="space-y-3 flex-1">
@@ -344,8 +386,6 @@ export default function App() {
                      )}
                    </div>
                 </div>
-
-                {/* 2. 新增：月銷售統計 (專屬為後廚擴充) */}
                 <div className="p-6 bg-slate-800/80 rounded-3xl border border-blue-500/20 shadow-2xl backdrop-blur-md flex flex-col">
                    <h2 className="text-blue-400 font-black mb-6 flex items-center gap-3 text-xl uppercase tracking-widest"><BarChart3 size={24} /> 本月銷售統計</h2>
                    <div className="flex justify-between items-end mb-4 border-b border-slate-700 pb-4">
@@ -371,15 +411,11 @@ export default function App() {
                      )}
                    </div>
                 </div>
-
-                {/* 3. 庫存管理 */}
                 <div className="p-6 bg-slate-800/80 rounded-3xl border border-emerald-500/20 shadow-2xl backdrop-blur-md flex flex-col">
                    <h2 className="text-emerald-500 font-black mb-6 flex items-center gap-3 text-xl uppercase tracking-widest"><PackagePlus size={24} /> 庫存管理</h2>
                    <div className="space-y-3 flex-1">{menuData.find(c=>c.id==='c3')?.items.map(i => (<div key={i.id} className="flex justify-between items-center bg-slate-700 p-4 rounded-2xl border border-slate-600"><span className="font-black text-sm">{i.name}</span><input type="number" value={i.stock} onChange={async(e)=>{ const u = menuData.find(c=>c.id==='c3').items.map(it=>it.id===i.id?{...it,stock:parseInt(e.target.value)}:it); await updateDoc(doc(db,'artifacts',appId,'public','data','menu','c3'),{items:u}); }} className="w-20 bg-slate-900 text-emerald-400 rounded-xl p-2 text-center font-black text-lg border-none" /></div>))}</div>
                 </div>
               </div>
-
-              {/* 訂單卡片區維持不變 */}
               <div className="flex gap-6 overflow-x-auto pb-10 no-scrollbar mt-8">
                 {orders.filter(o => o.status === 'pending').map(order => (
                   <div key={order.id} className="w-85 bg-slate-800 rounded-[2.5rem] border-t-8 border-amber-500 shadow-2xl flex flex-col shrink-0 animate-fade-in hover:scale-105 transition-transform">
@@ -397,17 +433,14 @@ export default function App() {
             </div>
           ) : (
             <div className="space-y-10 animate-fade-in">
-              {/* --- 標籤切換區 --- */}
               <div className="flex flex-wrap gap-4 bg-slate-800 p-2.5 rounded-2xl w-fit border border-slate-700 shadow-xl">
                 <button onClick={()=>setAdminTab('reports')} className={`px-6 md:px-10 py-3 rounded-xl text-base md:text-lg font-black transition-all ${adminTab==='reports'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>今日與本月結算 (REPORTS)</button>
                 <button onClick={()=>setAdminTab('salesDetail')} className={`px-6 md:px-10 py-3 rounded-xl text-base md:text-lg font-black transition-all ${adminTab==='salesDetail'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>歷史總報表 (ANALYTICS)</button>
                 <button onClick={()=>setAdminTab('products')} className={`px-6 md:px-10 py-3 rounded-xl text-base md:text-lg font-black transition-all ${adminTab==='products'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>商品管理 (STOCK)</button>
               </div>
 
-              {/* --- 新增：今日與本月結算區塊 --- */}
               {adminTab === 'reports' && (
                 <div className="space-y-10">
-                  {/* 今日結算 */}
                   <div className="space-y-6">
                     <h2 className="text-2xl font-black text-amber-500 flex items-center gap-3 uppercase tracking-widest border-b border-slate-700 pb-4">
                       <BarChart3 size={28} /> 今日營收結算
@@ -424,7 +457,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* 本月結算 */}
                   <div className="space-y-6 pt-6 border-t border-slate-700">
                     <h2 className="text-2xl font-black text-blue-400 flex items-center gap-3 uppercase tracking-widest border-b border-slate-700 pb-4">
                       <BarChart3 size={28} /> 本月累計結算
@@ -459,7 +491,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* --- 歷史總報表區塊 --- */}
               {adminTab === 'salesDetail' && (
                 <div className="bg-slate-800 p-10 rounded-[3rem] border border-slate-700 shadow-2xl">
                    <h2 className="text-2xl font-black mb-10 text-blue-400 flex items-center gap-3 uppercase tracking-widest"><BarChart3 size={32} /> 歷史銷售總明細</h2>
@@ -484,7 +515,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* --- 商品管理區塊 --- */}
               {adminTab === 'products' && (
                 <div className="space-y-8">
                   <div className="bg-slate-800 p-12 rounded-[4rem] border border-slate-700 shadow-2xl">
