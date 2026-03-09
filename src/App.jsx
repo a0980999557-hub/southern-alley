@@ -178,10 +178,18 @@ export default function App() {
           <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl text-center border border-amber-100 max-w-sm w-full animate-fade-in">
             <CheckCircle2 className="text-amber-600 mx-auto mb-4" size={70} />
             <h2 className="text-2xl font-black mb-4 uppercase">點餐成功</h2>
-            <div className="bg-amber-50 p-6 rounded-2xl text-left space-y-2 mb-6 border border-amber-100 font-bold">
-              <div className="text-[10px] text-amber-800 border-b border-amber-200 pb-1">單號：{lastOrder?.id}</div>
-              {lastOrder?.items.map((i,idx)=><div key={idx} className="text-[11px] flex justify-between"><span>{i.name} x {i.quantity}</span><span>$ {i.price*i.quantity}</span></div>)}
-              <div className="border-t border-amber-200 mt-2 pt-2 text-right text-xl text-amber-900">$ {lastOrder?.total}</div>
+            <div className="bg-amber-50 p-6 rounded-2xl text-left space-y-2 mb-6 border border-amber-100">
+              {/* 修改：加大結帳成功單號與明細字體，增加對比度 */}
+              <div className="text-sm font-black text-amber-900 border-b border-amber-200 pb-2 mb-2">單號：{lastOrder?.id}</div>
+              {lastOrder?.items.map((i,idx)=>(
+                <div key={idx} className="text-sm font-bold text-amber-950 flex justify-between py-1">
+                  <span>{i.name} x {i.quantity}</span>
+                  <span>$ {i.price*i.quantity}</span>
+                </div>
+              ))}
+              <div className="border-t border-amber-200 mt-3 pt-3 text-right text-3xl font-black text-amber-900">
+                $ {lastOrder?.total}
+              </div>
             </div>
             <button onClick={()=>{setCart([]); setOrderStatus('ordering');}} className="w-full bg-amber-800 text-white py-4 rounded-2xl font-bold active:scale-95 shadow-lg">返回首頁</button>
           </div>
@@ -189,7 +197,7 @@ export default function App() {
       );
     }
     return (
-      <div className="min-h-screen bg-[#FDFBF7] font-sans pb-32 flex flex-col text-amber-900 overflow-x-hidden">
+      <div className="min-h-screen bg-[#FDFBF7] font-sans pb-32 flex flex-col text-amber-900 overflow-x-hidden relative">
         <header className="bg-white/80 backdrop-blur-md sticky top-0 z-[100] border-b border-amber-100 px-6 py-4 shadow-sm">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -216,17 +224,29 @@ export default function App() {
           </div>
         )}
 
+        {/* 圖片放大 Modal */}
+        {zoomImage && (
+          <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 backdrop-blur-xl">
+            <div className="absolute inset-0 bg-black/80" onClick={() => setZoomImage(null)}></div>
+            <div className="relative z-10 w-full max-w-lg flex flex-col items-center">
+              <button onClick={() => setZoomImage(null)} className="absolute -top-14 right-0 text-white bg-white/20 hover:bg-white/40 rounded-full p-2 backdrop-blur-md transition-all active:scale-90">
+                <X size={28} />
+              </button>
+              <img src={zoomImage} alt="放大商品照" className="w-full h-auto rounded-[2.5rem] shadow-2xl object-cover border-4 border-white/10" />
+            </div>
+          </div>
+        )}
+
         <div className="bg-white/30 sticky top-[73px] z-20 border-b border-amber-50 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 py-4 flex gap-4 overflow-x-auto no-scrollbar justify-start md:justify-center">
             {menuData.map(cat => (
-              <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`flex items-center flex-col justify-center rounded-full transition-all shadow-sm shrink-0 ${activeCategory === cat.id ? 'bg-amber-800 text-white w-20 h-20 md:w-22 md:h-22 scale-105 ring-4 ring-amber-50' : 'bg-white text-amber-600 border border-amber-100 w-20 h-20 md:w-22 md:h-22 opacity-70 hover:opacity-100'}`}>
+              <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`flex items-center flex-col justify-center rounded-full transition-all shadow-sm shrink-0 ${activeCategory === cat.id ? 'bg-amber-800 text-white w-20 h-20 md:w-22 md:h-22 scale-105 ring-4 ring-amber-50' : 'bg-white text-amber-900 border border-amber-200 w-20 h-20 md:w-22 md:h-22 opacity-80 hover:opacity-100'}`}>
                 <span className="text-[14px] md:text-sm font-black px-2">{cat.name}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* --- 手機版商品卡片大美化 --- */}
         <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:mr-[380px] pb-32">
           {menuData.find(c => c.id === activeCategory)?.items.map(item => {
             const cartItem = cart.find(c => c.id === item.id);
@@ -237,25 +257,25 @@ export default function App() {
             return (
               <div key={item.id} className="bg-white rounded-[2rem] p-5 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-amber-50 flex flex-col items-center text-center transition-all relative group">
                 
-                {/* 1. 圖片縮小約兩倍 (w-20 h-20)，改為圓潤高質感設計 */}
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-amber-50 relative shrink-0 shadow-inner mb-4 border-4 border-white group-hover:border-amber-100 transition-colors" onClick={() => setZoomImage(item.image)}>
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-amber-50 relative shrink-0 shadow-inner mb-4 border-4 border-white group-hover:border-amber-100 transition-colors cursor-pointer" onClick={() => setZoomImage(item.image)}>
                   <img src={item.image} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" alt={item.name} />
                 </div>
                 
                 <div className="flex-1 flex flex-col w-full">
-                  {/* 2. 文字放大 2pt 並置中 */}
                   <div className="mb-3">
-                    <h3 className="text-xl font-black text-amber-950 leading-tight mb-2">
+                    {/* 修改：無底色時文字加深至 amber-950，字體放大 */}
+                    <h3 className="text-xl sm:text-2xl font-black text-amber-950 leading-tight mb-2">
                       {isHot && <span className="text-orange-500 mr-1 animate-bounce inline-block">🔥</span>}
                       {item.name}
                     </h3>
-                    <p className="text-xs text-amber-700/60 italic leading-relaxed px-2 line-clamp-2 h-8">{item.poetry}</p>
-                    {left !== null && <div className={`text-[10px] font-black mt-2 ${left > 0 ? 'text-red-600' : 'text-slate-400'}`}>限量餘額：{left}</div>}
+                    {/* 修改：詩詞字體加深加粗，行高增加 */}
+                    <p className="text-xs sm:text-sm text-amber-900/80 font-bold italic leading-relaxed px-2 line-clamp-2 h-10">{item.poetry}</p>
+                    {left !== null && <div className={`text-[11px] font-black mt-2 ${left > 0 ? 'text-red-600' : 'text-slate-400'}`}>限量餘額：{left}</div>}
                   </div>
                   
-                  {/* 3. 價格與明顯的滿版加入購物車按鈕 */}
                   <div className="mt-auto flex flex-col gap-3 w-full">
-                    <span className="text-xl font-black text-amber-600 font-serif">${item.price}</span>
+                    {/* 修改：價格字體加深並放大 */}
+                    <span className="text-2xl font-black text-amber-800 font-serif">${item.price}</span>
                     
                     {quantity === 0 ? (
                       <button onClick={() => addToCart(item)} disabled={left===0} className={`w-full py-3.5 rounded-full flex items-center justify-center font-black transition-all gap-2 shadow-lg active:scale-95 ${left===0 ? 'bg-gray-200 text-gray-400' : 'bg-gradient-to-r from-amber-600 to-amber-800 text-white hover:from-amber-700 hover:to-amber-900 shadow-[0_4px_15px_rgba(146,64,14,0.3)]'}`}>
@@ -263,8 +283,8 @@ export default function App() {
                       </button>
                     ) : (
                       <div className="flex items-center justify-between w-full bg-amber-50/80 rounded-full p-1.5 border border-amber-100 shadow-inner">
-                        <button onClick={() => updateQuantity(item.id, -1)} className="bg-white text-amber-700 w-11 h-11 rounded-full flex items-center justify-center shadow-sm hover:bg-amber-100 transition-colors active:scale-90"><Minus size={20} /></button>
-                        <span className="font-black text-amber-950 text-lg w-10 text-center">{quantity}</span>
+                        <button onClick={() => updateQuantity(item.id, -1)} className="bg-white text-amber-800 w-11 h-11 rounded-full flex items-center justify-center shadow-sm hover:bg-amber-100 transition-colors active:scale-90"><Minus size={20} /></button>
+                        <span className="font-black text-amber-950 text-xl w-10 text-center">{quantity}</span>
                         <button onClick={() => updateQuantity(item.id, 1)} disabled={left===0} className={`w-11 h-11 rounded-full flex items-center justify-center shadow-md transition-colors active:scale-90 ${left===0 ? 'bg-gray-300 text-gray-500' : 'bg-amber-700 text-white hover:bg-amber-800'}`}><Plus size={20} /></button>
                       </div>
                     )}
@@ -275,7 +295,6 @@ export default function App() {
           })}
         </main>
 
-        {/* 4. 手機版底部懸浮購物車 (置中短膠囊設計) */}
         <div className="lg:hidden fixed bottom-6 left-0 right-0 flex justify-center z-[150] pb-safe pointer-events-none px-4">
           <div className="bg-amber-950 rounded-full shadow-[0_15px_40px_rgba(0,0,0,0.4)] p-2 pr-3 flex items-center gap-4 sm:gap-6 border border-amber-900/50 backdrop-blur-xl pointer-events-auto animate-slide-up">
             <div className="flex items-center">
@@ -294,7 +313,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* 手機版購物明細 Modal */}
         {isCartOpen && (
           <div className="fixed inset-0 z-[200] flex flex-col justify-end lg:hidden">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsCartOpen(false)}></div>
