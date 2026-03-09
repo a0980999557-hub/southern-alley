@@ -325,10 +325,13 @@ export default function App() {
        <main className="p-6 flex-1 max-w-[1400px] mx-auto w-full overflow-y-auto">
           {systemRole === 'kitchen' ? (
             <div className="space-y-8 animate-fade-in">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-6 bg-slate-800/80 rounded-3xl border border-amber-500/20 shadow-2xl backdrop-blur-md">
+              {/* 改為三大儀表板並排 */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* 1. 今日排行 (HOT 5) */}
+                <div className="p-6 bg-slate-800/80 rounded-3xl border border-amber-500/20 shadow-2xl backdrop-blur-md flex flex-col">
                    <h2 className="text-amber-500 font-black mb-6 flex items-center gap-3 text-xl uppercase tracking-widest"><TrendingUp size={24} /> 今日排行 (HOT 5)</h2>
-                   <div className="space-y-3">
+                   <div className="space-y-3 flex-1">
                      {todayStats.hot.length === 0 ? (
                        <div className="text-slate-400 font-bold p-4 text-center">今日尚未有銷售紀錄</div>
                      ) : (
@@ -341,12 +344,43 @@ export default function App() {
                      )}
                    </div>
                 </div>
-                <div className="p-6 bg-slate-800/80 rounded-3xl border border-amber-500/20 shadow-2xl backdrop-blur-md">
-                   <h2 className="text-amber-500 font-black mb-6 flex items-center gap-3 text-xl uppercase tracking-widest"><PackagePlus size={24} /> 庫存管理</h2>
-                   <div className="space-y-3">{menuData.find(c=>c.id==='c3')?.items.map(i => (<div key={i.id} className="flex justify-between items-center bg-slate-700 p-4 rounded-2xl border border-slate-600"><span className="font-black text-sm">{i.name}</span><input type="number" value={i.stock} onChange={async(e)=>{ const u = menuData.find(c=>c.id==='c3').items.map(it=>it.id===i.id?{...it,stock:parseInt(e.target.value)}:it); await updateDoc(doc(db,'artifacts',appId,'public','data','menu','c3'),{items:u}); }} className="w-20 bg-slate-900 text-amber-400 rounded-xl p-2 text-center font-black text-lg border-none" /></div>))}</div>
+
+                {/* 2. 新增：月銷售統計 (專屬為後廚擴充) */}
+                <div className="p-6 bg-slate-800/80 rounded-3xl border border-blue-500/20 shadow-2xl backdrop-blur-md flex flex-col">
+                   <h2 className="text-blue-400 font-black mb-6 flex items-center gap-3 text-xl uppercase tracking-widest"><BarChart3 size={24} /> 本月銷售統計</h2>
+                   <div className="flex justify-between items-end mb-4 border-b border-slate-700 pb-4">
+                     <div>
+                       <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">本月累計營收</div>
+                       <div className="text-2xl font-black text-white">$ {monthStats.totalRev.toLocaleString()}</div>
+                     </div>
+                     <div className="text-right">
+                       <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">總單數</div>
+                       <div className="text-xl font-black text-blue-400">{monthStats.orderCount} 單</div>
+                     </div>
+                   </div>
+                   <div className="space-y-3 flex-1">
+                     {monthStats.hot.length === 0 ? (
+                       <div className="text-slate-400 font-bold p-4 text-center mt-4">本月尚未有銷售紀錄</div>
+                     ) : (
+                       monthStats.hot.map((h, i) => (
+                         <div key={i} className="bg-slate-900 p-3 rounded-xl border-l-4 border-blue-500 flex justify-between items-center shadow-md">
+                           <span className="font-black text-sm text-slate-200">#{i+1} {h.name}</span>
+                           <span className="text-blue-400 font-black text-lg">{h.count} <span className="text-xs">份</span></span>
+                         </div>
+                       ))
+                     )}
+                   </div>
+                </div>
+
+                {/* 3. 庫存管理 */}
+                <div className="p-6 bg-slate-800/80 rounded-3xl border border-emerald-500/20 shadow-2xl backdrop-blur-md flex flex-col">
+                   <h2 className="text-emerald-500 font-black mb-6 flex items-center gap-3 text-xl uppercase tracking-widest"><PackagePlus size={24} /> 庫存管理</h2>
+                   <div className="space-y-3 flex-1">{menuData.find(c=>c.id==='c3')?.items.map(i => (<div key={i.id} className="flex justify-between items-center bg-slate-700 p-4 rounded-2xl border border-slate-600"><span className="font-black text-sm">{i.name}</span><input type="number" value={i.stock} onChange={async(e)=>{ const u = menuData.find(c=>c.id==='c3').items.map(it=>it.id===i.id?{...it,stock:parseInt(e.target.value)}:it); await updateDoc(doc(db,'artifacts',appId,'public','data','menu','c3'),{items:u}); }} className="w-20 bg-slate-900 text-emerald-400 rounded-xl p-2 text-center font-black text-lg border-none" /></div>))}</div>
                 </div>
               </div>
-              <div className="flex gap-6 overflow-x-auto pb-10 no-scrollbar">
+
+              {/* 訂單卡片區維持不變 */}
+              <div className="flex gap-6 overflow-x-auto pb-10 no-scrollbar mt-8">
                 {orders.filter(o => o.status === 'pending').map(order => (
                   <div key={order.id} className="w-85 bg-slate-800 rounded-[2.5rem] border-t-8 border-amber-500 shadow-2xl flex flex-col shrink-0 animate-fade-in hover:scale-105 transition-transform">
                     <div className="p-6 border-b border-slate-700 font-black flex justify-between items-center text-amber-50">
