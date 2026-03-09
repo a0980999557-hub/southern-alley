@@ -37,7 +37,7 @@ const INITIAL_MENU = [
   { id: 'c3', name: '法式甜點', icon: 'cake', items: [{ id: 'd1', name: '草莓伯爵千層', price: 220, poetry: '紅蕊層疊映纖指，伯爵幽香透晚霞。', image: 'https://images.unsplash.com/photo-1603532648955-039310d9ed75?w=600', stock: 10 }] }
 ];
 
-export default function CafeSystem() {
+export default function App() {
   const [user, setUser] = useState(null);
   const [systemRole, setSystemRole] = useState('customer'); 
   const [adminTab, setAdminTab] = useState('reports');
@@ -78,17 +78,49 @@ export default function CafeSystem() {
       setIsDataLoaded(true);
     });
     const ordersRef = collection(db, 'artifacts', appId, 'public', 'data', 'orders');
-    onSnapshot(ordersRef, (snap) => setOrders(snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
+    onSnapshot(ordersRef, (snap) => {
+      const fetchedOrders = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // 依照時間戳降序排列 (新的在前面)
+      fetchedOrders.sort((a, b) => b.timestamp - a.timestamp);
+      setOrders(fetchedOrders);
+    });
   }, [user]);
 
-  const hotItems = useMemo(() => {
-    const counts = {};
-    orders.forEach(o => o.items.forEach(i => counts[i.id] = (counts[i.id] || 0) + i.quantity));
-    const list = [];
-    menuData.forEach(c => c.items.forEach(i => { if(counts[i.id]) list.push({name: i.name, count: counts[i.id]}); }));
-    return list.sort((a,b)=>b.count-a.count).slice(0, 5);
+  // ================= 結算報表與排行邏輯 (依實際日期過濾) =================
+  const { todayStats, monthStats } = useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const endOfToday = startOfToday + 24 * 60 * 60 * 1000 - 1;
+    
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).getTime();
+
+    const todayOrders = orders.filter(o => o.timestamp >= startOfToday && o.timestamp <= endOfToday);
+    const monthOrders = orders.filter(o => o.timestamp >= startOfMonth && o.timestamp <= endOfMonth);
+
+    const calcStats = (filteredOrders) => {
+      const counts = {};
+      let totalRev = 0;
+      filteredOrders.forEach(o => {
+        totalRev += o.total;
+        o.items.forEach(i => counts[i.id] = (counts[i.id] || 0) + i.quantity);
+      });
+      const list = [];
+      menuData.forEach(c => c.items.forEach(i => { if(counts[i.id]) list.push({name: i.name, count: counts[i.id]}); }));
+      return {
+        totalRev,
+        orderCount: filteredOrders.length,
+        hot: list.sort((a,b) => b.count - a.count).slice(0, 5) // 取前 5 名
+      };
+    };
+
+    return {
+      todayStats: calcStats(todayOrders),
+      monthStats: calcStats(monthOrders)
+    };
   }, [orders, menuData]);
 
+  // 所有訂單商品明細 (用於總銷售細目報表)
   const salesDetail = useMemo(() => {
     const detail = {};
     orders.forEach(o => { o.items.forEach(i => {
@@ -194,7 +226,8 @@ export default function CafeSystem() {
         <main className="flex-1 max-w-7xl mx-auto px-4 py-10 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:mr-[380px]">
           {menuData.find(c => c.id === activeCategory)?.items.map(item => {
             const left = getDisplayStock(item);
-            const isHot = hotItems.some(h => h.name === item.name);
+            // 判斷是否為今日熱銷
+            const isHot = todayStats.hot.some(h => h.name === item.name);
             return (
               <div key={item.id} className="bg-white rounded-[2rem] p-6 shadow-sm border border-amber-50 flex flex-col items-center text-center transition-all hover:shadow-lg">
                 <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-amber-50 mb-4 shadow-md" onClick={() => setZoomImage(item.image)}><img src={item.image} className="w-full h-full object-cover" /></div>
@@ -295,7 +328,18 @@ export default function CafeSystem() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-6 bg-slate-800/80 rounded-3xl border border-amber-500/20 shadow-2xl backdrop-blur-md">
                    <h2 className="text-amber-500 font-black mb-6 flex items-center gap-3 text-xl uppercase tracking-widest"><TrendingUp size={24} /> 今日排行 (HOT 5)</h2>
-                   <div className="space-y-3">{hotItems.map((h, i) => (<div key={i} className="bg-slate-900 p-4 rounded-xl border-l-4 border-amber-500 flex justify-between items-center shadow-lg"><span className="font-black text-sm">#{i+1} {h.name}</span><span className="text-amber-400 font-black text-xl">{h.count} 份</span></div>))}</div>
+                   <div className="space-y-3">
+                     {todayStats.hot.length === 0 ? (
+                       <div className="text-slate-400 font-bold p-4 text-center">今日尚未有銷售紀錄</div>
+                     ) : (
+                       todayStats.hot.map((h, i) => (
+                         <div key={i} className="bg-slate-900 p-4 rounded-xl border-l-4 border-amber-500 flex justify-between items-center shadow-lg">
+                           <span className="font-black text-sm">#{i+1} {h.name}</span>
+                           <span className="text-amber-400 font-black text-xl">{h.count} 份</span>
+                         </div>
+                       ))
+                     )}
+                   </div>
                 </div>
                 <div className="p-6 bg-slate-800/80 rounded-3xl border border-amber-500/20 shadow-2xl backdrop-blur-md">
                    <h2 className="text-amber-500 font-black mb-6 flex items-center gap-3 text-xl uppercase tracking-widest"><PackagePlus size={24} /> 庫存管理</h2>
@@ -319,60 +363,105 @@ export default function CafeSystem() {
             </div>
           ) : (
             <div className="space-y-10 animate-fade-in">
-              {/* --- 修改：主控室分類切換文字加大 2pt (由原本基礎 text-base 升級) --- */}
-              <div className="flex gap-4 bg-slate-800 p-2.5 rounded-2xl w-fit border border-slate-700 shadow-xl">
-                <button onClick={()=>setAdminTab('reports')} className={`px-10 py-3 rounded-xl text-lg font-black transition-all ${adminTab==='reports'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>銷售報表分析 (ANALYTICS)</button>
-                <button onClick={()=>setAdminTab('products')} className={`px-10 py-3 rounded-xl text-lg font-black transition-all ${adminTab==='products'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>商品管理 (STOCK)</button>
+              {/* --- 標籤切換區 --- */}
+              <div className="flex flex-wrap gap-4 bg-slate-800 p-2.5 rounded-2xl w-fit border border-slate-700 shadow-xl">
+                <button onClick={()=>setAdminTab('reports')} className={`px-6 md:px-10 py-3 rounded-xl text-base md:text-lg font-black transition-all ${adminTab==='reports'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>今日與本月結算 (REPORTS)</button>
+                <button onClick={()=>setAdminTab('salesDetail')} className={`px-6 md:px-10 py-3 rounded-xl text-base md:text-lg font-black transition-all ${adminTab==='salesDetail'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>歷史總報表 (ANALYTICS)</button>
+                <button onClick={()=>setAdminTab('products')} className={`px-6 md:px-10 py-3 rounded-xl text-base md:text-lg font-black transition-all ${adminTab==='products'?'bg-blue-600 text-white shadow-lg':'text-slate-400 hover:text-white'}`}>商品管理 (STOCK)</button>
               </div>
 
-              {adminTab === 'reports' ? (
+              {/* --- 新增：今日與本月結算區塊 --- */}
+              {adminTab === 'reports' && (
                 <div className="space-y-10">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* --- 修改：外框縮小 (h-52 -> h-44, p-8 -> p-5), 標籤字體加大, 金額數字調小 --- */}
-                    <div className="bg-gradient-to-br from-blue-600 to-indigo-900 p-5 rounded-[2.5rem] shadow-2xl flex flex-col justify-between h-44 border-4 border-blue-500/20">
-                       <span className="font-black text-blue-100 uppercase tracking-widest text-base">當日雲端累計總額</span>
-                       <h3 className="text-4xl font-black text-white tracking-tighter">$ {orders.reduce((s,o)=>s+o.total, 0).toLocaleString()}</h3>
-                    </div>
-                    <div className="bg-slate-800 p-5 rounded-[2.5rem] border-4 border-slate-700 flex flex-col justify-between h-44 shadow-xl">
-                       <span className="font-black text-slate-500 uppercase tracking-widest text-base">總結帳單數統計</span>
-                       <h3 className="text-4xl font-black text-amber-500 tracking-tighter">{orders.length} <span className="text-sm text-slate-600 uppercase">單</span></h3>
+                  {/* 今日結算 */}
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-black text-amber-500 flex items-center gap-3 uppercase tracking-widest border-b border-slate-700 pb-4">
+                      <BarChart3 size={28} /> 今日營收結算
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="bg-gradient-to-br from-amber-600 to-amber-900 p-6 rounded-[2.5rem] shadow-2xl flex flex-col justify-between h-44 border-4 border-amber-500/20">
+                         <span className="font-black text-amber-100 uppercase tracking-widest text-base">今日營收總額</span>
+                         <h3 className="text-4xl font-black text-white tracking-tighter">$ {todayStats.totalRev.toLocaleString()}</h3>
+                      </div>
+                      <div className="bg-slate-800 p-6 rounded-[2.5rem] border-4 border-slate-700 flex flex-col justify-between h-44 shadow-xl">
+                         <span className="font-black text-slate-500 uppercase tracking-widest text-base">今日總單數</span>
+                         <h3 className="text-4xl font-black text-blue-400 tracking-tighter">{todayStats.orderCount} <span className="text-sm text-slate-600 uppercase">單</span></h3>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="bg-slate-800 p-10 rounded-[3rem] border border-slate-700 shadow-2xl">
-                     <h2 className="text-2xl font-black mb-10 text-blue-400 flex items-center gap-3 uppercase tracking-widest"><BarChart3 size={32} /> 銷售細目報表</h2>
-                     <table className="w-full text-left font-black">
-                        <thead>
-                           {/* --- 修改：表頭文字項目加大 2pt (ITEM, QTY, TOTAL) --- */}
-                           <tr className="text-slate-500 border-b border-slate-700 text-base uppercase tracking-widest">
-                              <th className="pb-6 px-4">商品名稱 (ITEM)</th>
-                              <th className="pb-6 px-4 text-center">總銷量 (QTY)</th>
-                              <th className="pb-6 px-4 text-right">合計金額 (TOTAL)</th>
-                           </tr>
-                        </thead>
-                        <tbody>
-                           {salesDetail.map((s,i)=>(
-                             <tr key={i} className="border-b border-slate-700/30 text-xl hover:bg-slate-700/40 transition-colors">
-                               <td className="py-6 px-4">{s.name}</td>
-                               <td className="py-6 px-4 text-center text-amber-500">{s.qty} 份</td>
-                               <td className="py-6 px-4 text-right text-blue-400">$ {s.subtotal.toLocaleString()}</td>
-                             </tr>
+                  {/* 本月結算 */}
+                  <div className="space-y-6 pt-6 border-t border-slate-700">
+                    <h2 className="text-2xl font-black text-blue-400 flex items-center gap-3 uppercase tracking-widest border-b border-slate-700 pb-4">
+                      <BarChart3 size={28} /> 本月累計結算
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="bg-gradient-to-br from-blue-600 to-indigo-900 p-6 rounded-[2.5rem] shadow-2xl flex flex-col justify-between h-44 border-4 border-blue-500/20">
+                         <span className="font-black text-blue-100 uppercase tracking-widest text-base">本月營收總額</span>
+                         <h3 className="text-4xl font-black text-white tracking-tighter">$ {monthStats.totalRev.toLocaleString()}</h3>
+                      </div>
+                      <div className="bg-slate-800 p-6 rounded-[2.5rem] border-4 border-slate-700 flex flex-col justify-between h-44 shadow-xl">
+                         <span className="font-black text-slate-500 uppercase tracking-widest text-base">本月總單數</span>
+                         <h3 className="text-4xl font-black text-amber-500 tracking-tighter">{monthStats.orderCount} <span className="text-sm text-slate-600 uppercase">單</span></h3>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-800 p-10 rounded-[3rem] border border-slate-700 shadow-2xl mt-8">
+                       <h2 className="text-2xl font-black mb-8 text-blue-400 flex items-center gap-3 uppercase tracking-widest">🏆 本月熱銷 HOT 5</h2>
+                       {monthStats.hot.length === 0 ? (
+                         <div className="text-slate-500 text-center py-6 font-bold">本月尚未有銷售紀錄</div>
+                       ) : (
+                         <div className="space-y-4">
+                           {monthStats.hot.map((h, i) => (
+                             <div key={i} className="bg-slate-900 p-5 rounded-2xl border-l-4 border-blue-500 flex justify-between items-center shadow-lg">
+                               <span className="font-black text-lg text-slate-200">#{i+1} {h.name}</span>
+                               <span className="text-blue-400 font-black text-2xl">{h.count} 份</span>
+                             </div>
                            ))}
-                        </tbody>
-                     </table>
+                         </div>
+                       )}
+                    </div>
                   </div>
                 </div>
-              ) : (
+              )}
+
+              {/* --- 歷史總報表區塊 --- */}
+              {adminTab === 'salesDetail' && (
+                <div className="bg-slate-800 p-10 rounded-[3rem] border border-slate-700 shadow-2xl">
+                   <h2 className="text-2xl font-black mb-10 text-blue-400 flex items-center gap-3 uppercase tracking-widest"><BarChart3 size={32} /> 歷史銷售總明細</h2>
+                   <table className="w-full text-left font-black">
+                      <thead>
+                         <tr className="text-slate-500 border-b border-slate-700 text-base uppercase tracking-widest">
+                            <th className="pb-6 px-4">商品名稱 (ITEM)</th>
+                            <th className="pb-6 px-4 text-center">總銷量 (QTY)</th>
+                            <th className="pb-6 px-4 text-right">合計金額 (TOTAL)</th>
+                         </tr>
+                      </thead>
+                      <tbody>
+                         {salesDetail.map((s,i)=>(
+                           <tr key={i} className="border-b border-slate-700/30 text-xl hover:bg-slate-700/40 transition-colors">
+                             <td className="py-6 px-4">{s.name}</td>
+                             <td className="py-6 px-4 text-center text-amber-500">{s.qty} 份</td>
+                             <td className="py-6 px-4 text-right text-blue-400">$ {s.subtotal.toLocaleString()}</td>
+                           </tr>
+                         ))}
+                      </tbody>
+                   </table>
+                </div>
+              )}
+
+              {/* --- 商品管理區塊 --- */}
+              {adminTab === 'products' && (
                 <div className="space-y-8">
                   <div className="bg-slate-800 p-12 rounded-[4rem] border border-slate-700 shadow-2xl">
                     <h2 className="text-2xl font-black mb-10 flex items-center gap-3 text-blue-400 uppercase tracking-widest"><PackagePlus size={36} /> 新增 ASA 商品上架</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                      <select value={newItem.categoryId} onChange={e=>setNewItem({...newItem, categoryId: e.target.value})} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner">{menuData.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-                      <input type="text" placeholder="品名" value={newItem.name} onChange={e=>{const n=e.target.value; setNewItem({...newItem, name:n, poetry:generatePoetry(n)});}} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner" />
-                      <input type="number" placeholder="單價" value={newItem.price} onChange={e=>setNewItem({...newItem, price:e.target.value})} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner" />
+                      <select value={newItem.categoryId} onChange={e=>setNewItem({...newItem, categoryId: e.target.value})} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner text-slate-200">{menuData.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+                      <input type="text" placeholder="品名" value={newItem.name} onChange={e=>{const n=e.target.value; setNewItem({...newItem, name:n, poetry:generatePoetry(n)});}} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner text-slate-200" />
+                      <input type="number" placeholder="單價" value={newItem.price} onChange={e=>setNewItem({...newItem, price:e.target.value})} className="bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner text-slate-200" />
                       <input type="text" placeholder="自動詩詞" value={newItem.poetry} onChange={e=>setNewItem({...newItem, poetry:e.target.value})} className="col-span-full bg-slate-900 p-6 rounded-3xl border border-blue-900/50 italic text-blue-200 text-lg shadow-inner font-serif" />
-                      <input type="text" placeholder="照片網址" value={newItem.image} onChange={e=>setNewItem({...newItem, image:e.target.value})} className="col-span-full bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner" />
-                      <button onClick={async()=>{ const cat = menuData.find(c=>c.id===newItem.categoryId); const it = { ...newItem, id: `m_${Date.now()}`, price: parseInt(newItem.price), stock: parseInt(newItem.stock) }; await updateDoc(doc(db,'artifacts',appId,'public','data','menu',newItem.categoryId), { items: [...cat.items, it] }); alert('上架成功！'); setNewItem({...newItem, name:'', price:'', poetry:'', image:''}); }} className="col-span-full bg-blue-600 py-8 rounded-[3rem] font-black shadow-2xl active:scale-95 transition-all text-2xl mt-6 uppercase tracking-widest tracking-widest tracking-widest">正式發佈商品 (PUBLISH)</button>
+                      <input type="text" placeholder="照片網址" value={newItem.image} onChange={e=>setNewItem({...newItem, image:e.target.value})} className="col-span-full bg-slate-900 p-6 rounded-3xl border-none font-black text-base shadow-inner text-slate-200" />
+                      <button onClick={async()=>{ const cat = menuData.find(c=>c.id===newItem.categoryId); const it = { ...newItem, id: `m_${Date.now()}`, price: parseInt(newItem.price), stock: parseInt(newItem.stock) }; await updateDoc(doc(db,'artifacts',appId,'public','data','menu',newItem.categoryId), { items: [...cat.items, it] }); alert('上架成功！'); setNewItem({...newItem, name:'', price:'', poetry:'', image:'', stock:0}); }} className="col-span-full bg-blue-600 py-8 rounded-[3rem] font-black shadow-2xl active:scale-95 transition-all text-2xl mt-6 uppercase tracking-widest text-white">正式發佈商品 (PUBLISH)</button>
                     </div>
                   </div>
                   <div className="bg-slate-800 p-10 rounded-[3rem] border border-slate-700 shadow-xl">
